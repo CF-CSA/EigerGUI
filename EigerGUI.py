@@ -63,7 +63,7 @@ class EigerGUI(QtWidgets.QMainWindow):
         layout.addWidget(self.outputfiles())
         layout.addWidget(self.screening())
         layout.addWidget(self.exp_geometry())
-        layout.addWidget(self.recSettings())
+        # layout.addWidget(self.recSettings())
         layout.addWidget(self.control())
 
         main = QtWidgets.QWidget()
@@ -157,31 +157,31 @@ class EigerGUI(QtWidgets.QMainWindow):
         layout = QtWidgets.QGridLayout()
 
         layout.addWidget(QtWidgets.QLabel(text="Distance:"), 0, 0)
-        db = QtWidgets.QDoubleSpinBox(self, value=34, minimum=34, maximum=247)
+        db = QtWidgets.QDoubleSpinBox(self, value=self.D_mm, minimum=34, maximum=247)
         db.setSuffix(" mm")
         db.valueChanged.connect(self.new_distance)
         layout.addWidget(db, 0, 1)
 
         layout.addWidget(QtWidgets.QLabel(text="2Theta:"), 0, 2)
-        db = QtWidgets.QDoubleSpinBox(self, value=-15, minimum=-180, maximum=180)
+        db = QtWidgets.QDoubleSpinBox(self, value=self.twoTheta, minimum=-180, maximum=180)
         db.setSuffix("°")
         db.valueChanged.connect(self.new_twotheta)
         layout.addWidget(db, 0, 3)
 
         layout.addWidget(QtWidgets.QLabel(text="Omega"), 0, 4)
-        db = QtWidgets.QDoubleSpinBox(self, value=0, minimum=-180, maximum=180)
+        db = QtWidgets.QDoubleSpinBox(self, value=self.Omega, minimum=-180, maximum=180)
         db.setSuffix("°")
         db.valueChanged.connect(self.new_omega)
         layout.addWidget(db, 0, 5)
 
         layout.addWidget(QtWidgets.QLabel(text="Phi"))
-        db = QtWidgets.QDoubleSpinBox(self, value=0, minimum=-180.0, maximum=180.0)
+        db = QtWidgets.QDoubleSpinBox(self, value=self.Phi, minimum=-180.0, maximum=180.0)
         db.setSuffix("°")
         db.valueChanged.connect(self.new_phi)
         layout.addWidget(db)
 
         layout.addWidget(QtWidgets.QLabel(text="Chi"))
-        db = QtWidgets.QDoubleSpinBox(self, value=-25, minimum=-99.0, maximum=99.0)
+        db = QtWidgets.QDoubleSpinBox(self, value=self.Chi, minimum=-99.0, maximum=99.0)
         db.setSuffix("°")
         db.valueChanged.connect(self.new_chi)
         layout.addWidget(db)
@@ -206,21 +206,26 @@ class EigerGUI(QtWidgets.QMainWindow):
         my = QtWidgets.QGroupBox("Screen Sample")
         layout = QtWidgets.QGridLayout()
 
-        layout.addWidget(QtWidgets.QLabel(text="Scan Range:"), 0, 0)
-        sb = QtWidgets.QDoubleSpinBox(self, value=2.0, minimum=0.1, maximum=360 )
+        layout.addWidget(QtWidgets.QLabel(text="Scan Range: (APEX)"), 0, 0)
+        sb = QtWidgets.QDoubleSpinBox(self, value=self.scan_range, minimum=0.1, maximum=360 )
         sb.valueChanged.connect(self.new_scan_range)
         layout.addWidget(sb, 0, 1)
 
-        layout.addWidget(QtWidgets.QLabel(text="Image Width:"), 1, 0)
-        sb = QtWidgets.QDoubleSpinBox(self, value=0.5, minimum=0.1, maximum=2)
+        layout.addWidget(QtWidgets.QLabel(text="Image Width: (Actual)"), 1, 0)
+        sb = QtWidgets.QDoubleSpinBox(self, value=self.image_width, minimum=0.1, maximum=2)
         sb.valueChanged.connect(self.new_image_width)
         layout.addWidget(sb, 1, 1)
 
-        layout.addWidget(QtWidgets.QLabel(text="Exposure time:"), 2, 0)
-        sb = QtWidgets.QDoubleSpinBox(self, value=1.0, minimum=0.25, maximum=360000)
+        layout.addWidget(QtWidgets.QLabel(text="Exposure time: (Actual)"), 2, 0)
+        sb = QtWidgets.QDoubleSpinBox(self, value=self.frame_time, minimum=0.25, maximum=360000)
         sb.setSuffix(" s/image")
         sb.valueChanged.connect(self.new_frame_time)
         layout.addWidget(sb, 2, 1)
+
+        layout.addWidget(QtWidgets.QLabel(text="Exposure time: (APEX):)"), 3, 0)
+        apex_time = self.scan_range / self.image_width * self.frame_time
+        self.lbl_apex_time = QtWidgets.QLabel(text=f"{apex_time:.2f}")
+        layout.addWidget(self.lbl_apex_time, 3, 1)
 
         my.setLayout(layout)
         return (my)
@@ -388,14 +393,20 @@ class EigerGUI(QtWidgets.QMainWindow):
     @QtCore.pyqtSlot("double")
     def new_frame_time(self, value):
         self.frame_time = value
+        apex_time = self.scan_range / self.image_width * self.frame_time
+        self.lbl_apex_time.setText(f"{apex_time:.2f}")
 
     @QtCore.pyqtSlot("double")
     def new_scan_range(self, value):
         self.scan_range = value
+        apex_time = self.scan_range / self.image_width * self.frame_time
+        self.lbl_apex_time.setText(f"{apex_time:.2f}")
 
     @QtCore.pyqtSlot("double")
     def new_image_width(self, value):
         self.image_width = value
+        apex_time = self.scan_range / self.image_width * self.frame_time
+        self.lbl_apex_time.setText(f"{apex_time:.2f}")
 
     @QtCore.pyqtSlot("double")
     def new_phidot(self, rate=2.0):
