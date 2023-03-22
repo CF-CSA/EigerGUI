@@ -35,9 +35,10 @@ class EigerGUI(QtWidgets.QMainWindow):
         self.Chi = -35.0
         self.D_mm = 34 #mm
         self.Axis = "OMEGA"
-        self.source = "Mo"
+        self.source = "Cu"
         # parameters with reasonable defaults
         self.frame_time= 1.0 #seconds
+        self.s_per_degree = 1
         #
 
         self.setGeometry(50, 50, 600, 500)
@@ -98,6 +99,7 @@ class EigerGUI(QtWidgets.QMainWindow):
         layout.addWidget(QtWidgets.QLabel(text="Select source:"))
         cb = QtWidgets.QComboBox()
         cb.addItems(["Mo", "Cu"])
+        cb.setCurrentIndex(1)
         cb.currentIndexChanged.connect(self.new_source)
         layout.addWidget(cb)
 
@@ -157,7 +159,7 @@ class EigerGUI(QtWidgets.QMainWindow):
         layout = QtWidgets.QGridLayout()
 
         layout.addWidget(QtWidgets.QLabel(text="Distance:"), 0, 0)
-        db = QtWidgets.QDoubleSpinBox(self, value=self.D_mm, minimum=34, maximum=247)
+        db = QtWidgets.QDoubleSpinBox(self, value=self.D_mm, minimum=33.6, maximum=247)
         db.setSuffix(" mm")
         db.valueChanged.connect(self.new_distance)
         layout.addWidget(db, 0, 1)
@@ -175,7 +177,7 @@ class EigerGUI(QtWidgets.QMainWindow):
         layout.addWidget(db, 0, 5)
 
         layout.addWidget(QtWidgets.QLabel(text="Phi"))
-        db = QtWidgets.QDoubleSpinBox(self, value=self.Phi, minimum=-180.0, maximum=180.0)
+        db = QtWidgets.QDoubleSpinBox(self, value=self.Phi, minimum=-180.0, maximum=360.0)
         db.setSuffix("°")
         db.valueChanged.connect(self.new_phi)
         layout.addWidget(db)
@@ -218,9 +220,15 @@ class EigerGUI(QtWidgets.QMainWindow):
 
         layout.addWidget(QtWidgets.QLabel(text="Exposure time: (Actual)"), 2, 0)
         sb = QtWidgets.QDoubleSpinBox(self, value=self.frame_time, minimum=0.25, maximum=360000)
-        sb.setSuffix(" s/image")
         sb.valueChanged.connect(self.new_frame_time)
         layout.addWidget(sb, 2, 1)
+
+        qc = QtWidgets.QComboBox()
+        qc.addItems(["s/°", "s/image"])
+        qc.currentIndexChanged.connect(self.new_exposure_unit)
+        qc.setCurrentIndex(self.s_per_degree)
+        layout.addWidget(qc, 2, 2)
+
 
         layout.addWidget(QtWidgets.QLabel(text="Exposure time: (APEX):)"), 3, 0)
         apex_time = self.scan_range / self.image_width * self.frame_time
@@ -255,7 +263,6 @@ class EigerGUI(QtWidgets.QMainWindow):
         
         layout.addWidget(QtWidgets.QLabel(text="δϕ/δt≈", alignment=QtCore.Qt.AlignmentFlag.AlignRight|QtCore.Qt.AlignmentFlag.AlignVCenter), 1, 2)
         sb = QtWidgets.QDoubleSpinBox(self, minimum=-2.5, maximum=2.5)
-        sb.setSuffix("°/s")
         sb.setDecimals(1)
         sb.setValue(2.0)
         sb.valueChanged.connect(self.new_phidot)
@@ -395,6 +402,13 @@ class EigerGUI(QtWidgets.QMainWindow):
         self.frame_time = value
         apex_time = self.scan_range / self.image_width * self.frame_time
         self.lbl_apex_time.setText(f"{apex_time:.2f}")
+
+    @QtCore.pyqtSlot("int")
+    def new_exposure_unit(self, value):
+        if value == 0:
+            self.s_per_degree = 1
+        else:
+            self.s_per_degree = 0
 
     @QtCore.pyqtSlot("double")
     def new_scan_range(self, value):
