@@ -24,7 +24,8 @@ class EigerGUI(QtWidgets.QMainWindow):
         super(EigerGUI, self).__init__()
 
         # list of parameters used for workflow
-        self.outdir = os.path.join('D:', os.sep, 'frames', 'D8', 'screening')
+#        self.outdir = os.path.join('D:', os.sep, 'frames', 'D8', 'screening')
+        self.outdir = os.path.join(os.sep, 'home', 'tg', 'univie', 'instruments', 'D8', 'EIGER2', 'data')
         self.sampleID = "YourSampleID_no_Spaces"
         self.xID = 0
         self.armID = 0
@@ -360,7 +361,7 @@ class EigerGUI(QtWidgets.QMainWindow):
     def updatefilename(self):
         "generate the filename string displayed in GUI"
         now = time.strftime("_%Y-%m-%d_%H%M%S")
-        self.name_pattern = self.sampleID+now+"_ID-$id"
+        self.name_pattern = self.sampleID+"_ID-$id"+now
 
 
     """
@@ -462,7 +463,9 @@ class EigerGUI(QtWidgets.QMainWindow):
     @QtCore.pyqtSlot()
     def file_list(self):
         flist = self.detector.filelist()
-        print (flist)
+        print (f"Number of files on DCU: {len(flist)}")
+        for f in flist:
+            print (f"{f}")
 
     @QtCore.pyqtSlot()
     def download(self):
