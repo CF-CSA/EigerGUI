@@ -220,7 +220,7 @@ class EigerGUI(QtWidgets.QMainWindow):
         layout.addWidget(sb, 1, 1)
 
         layout.addWidget(QtWidgets.QLabel(text="Exposure time: (Actual)"), 2, 0)
-        sb = QtWidgets.QDoubleSpinBox(self, value=self.frame_time, minimum=0.25, maximum=360000)
+        sb = QtWidgets.QDoubleSpinBox(self, value=self.frame_time, minimum=0.025, maximum=360000)
         sb.valueChanged.connect(self.new_frame_time)
         layout.addWidget(sb, 2, 1)
 
@@ -231,47 +231,19 @@ class EigerGUI(QtWidgets.QMainWindow):
         layout.addWidget(qc, 2, 2)
 
 
-        layout.addWidget(QtWidgets.QLabel(text="Exposure time: (APEX):)"), 3, 0)
+        layout.addWidget(QtWidgets.QLabel(text="Exposure time: (APEX):"), 3, 0)
         apex_time = self.scan_range / self.image_width * self.frame_time
         self.lbl_apex_time = QtWidgets.QLabel(text=f"{apex_time:.2f}")
         layout.addWidget(self.lbl_apex_time, 3, 1)
 
-        my.setLayout(layout)
-        return (my)
-
-    """
-    Settings used for recording data
-    """
-    def recSettings(self):
-        "Setup measurement"
-        my = QtWidgets.QGroupBox("Recording data")
-        
-        layout = QtWidgets.QGridLayout()
-        
-        layout.addWidget(QtWidgets.QLabel(text="nimages:"), 0,0)
-        sb = QtWidgets.QSpinBox(self, minimum=1, maximum=100000)
-        sb.setValue(1000)
-        sb.valueChanged.connect(self.new_nimages)
-        layout.addWidget(sb, 0, 1)
-        
-        layout.addWidget(QtWidgets.QLabel(text="frame_time:"), 1,0)
-        sb = QtWidgets.QDoubleSpinBox(self, minimum=0.01, maximum=5.0)
-        sb.setSuffix("s")
-        sb.setDecimals(2)
-        sb.setValue(self.frame_time)
-        sb.valueChanged.connect(self.new_frame_time)
-        layout.addWidget(sb, 1,1)
-        
-        layout.addWidget(QtWidgets.QLabel(text="δϕ/δt≈", alignment=QtCore.Qt.AlignmentFlag.AlignRight|QtCore.Qt.AlignmentFlag.AlignVCenter), 1, 2)
-        sb = QtWidgets.QDoubleSpinBox(self, minimum=-2.5, maximum=2.5)
-        sb.setDecimals(1)
-        sb.setValue(2.0)
-        sb.valueChanged.connect(self.new_phidot)
-        layout.addWidget(sb, 1, 3)
+        layout.addWidget(QtWidgets.QLabel(text="nimages: (actual):"), 3, 2)
+        nimages = int (self.scan_range / self.image_width)
+        self.lbl_nimages = QtWidgets.QLabel(text=f"{nimages}")
+        layout.addWidget(self.lbl_nimages, 3, 3)
 
         my.setLayout(layout)
         return (my)
-    
+
     def control(self):
         "control buttons at bottom of GUI"
         my = QtWidgets.QWidget()
@@ -394,15 +366,14 @@ class EigerGUI(QtWidgets.QMainWindow):
         self.lbl_armID.setText(str(self.armID))
         self.updatefilename()
 
-    @QtCore.pyqtSlot(int)
-    def new_nimages(self, value):
-        self.nimages = value
-        
     @QtCore.pyqtSlot("double")
     def new_frame_time(self, value):
         self.frame_time = value
-        apex_time = self.scan_range / self.image_width * self.frame_time
+        nimages   = int (self.scan_range / self.image_width)
+        apex_time = nimages * self.frame_time
+        self.lbl_nimages.setText(f"{nimages}")
         self.lbl_apex_time.setText(f"{apex_time:.2f}")
+
 
     @QtCore.pyqtSlot("int")
     def new_exposure_unit(self, value):
@@ -414,13 +385,17 @@ class EigerGUI(QtWidgets.QMainWindow):
     @QtCore.pyqtSlot("double")
     def new_scan_range(self, value):
         self.scan_range = value
-        apex_time = self.scan_range / self.image_width * self.frame_time
+        nimages   = int (self.scan_range / self.image_width)
+        apex_time = nimages * self.frame_time
+        self.lbl_nimages.setText(f"{nimages}")
         self.lbl_apex_time.setText(f"{apex_time:.2f}")
 
     @QtCore.pyqtSlot("double")
     def new_image_width(self, value):
         self.image_width = value
-        apex_time = self.scan_range / self.image_width * self.frame_time
+        nimages   = int (self.scan_range / self.image_width)
+        apex_time = nimages * self.frame_time
+        self.lbl_nimages.setText(f"{nimages}")
         self.lbl_apex_time.setText(f"{apex_time:.2f}")
 
     @QtCore.pyqtSlot("double")
