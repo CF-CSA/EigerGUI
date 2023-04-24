@@ -21,7 +21,7 @@ class DetectorFrontend:
     """
         Basic setup up. This will At startup, the detector has to be initialized first"
     """
-    def setup(self, outdir, frame_time=1.0, elements=["Mo", "Cu"]):
+    def setup(self, datadir, frame_time=1.0, elements=["Mo", "Cu"]):
         #self.detector.send_command("initialize")
         "Basic settings"
         # we always use trigger mote 'ints'
@@ -38,7 +38,7 @@ class DetectorFrontend:
         self.elements = elements
         self.allowed_elements = self.detector.get_allowed("element", "detector")
         # output directory
-        self.outdir = outdir
+        self.outdir = datadir
 
     """
     Get state for iface

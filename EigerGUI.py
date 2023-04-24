@@ -25,7 +25,8 @@ class EigerGUI(QtWidgets.QMainWindow):
 
         # list of parameters used for workflow
 #        self.outdir = os.path.join('D:', os.sep, 'frames', 'D8', 'screening')
-        self.outdir = os.path.join(os.sep, 'home', 'tg', 'univie', 'instruments', 'D8', 'EIGER2', 'data')
+        self.datadir = os.path.join(os.sep, 'home', 'tg', 'univie', 'instruments', 'D8', 'EIGER2', 'data')
+        self.workdir = os.path.join(os.sep, 'home', 'tg', 'univie', 'instruments', 'D8', 'EIGER2')
         self.sampleID = "YourSampleID_no_Spaces"
         self.xID = 0
         self.armID = 0
@@ -50,7 +51,7 @@ class EigerGUI(QtWidgets.QMainWindow):
         self.frame_time = 1.0
         self.scan_range = 5.0
         self.image_width = 0.5
-        self.detector.setup(frame_time=self.frame_time, outdir=self.outdir)
+        self.detector.setup(frame_time=self.frame_time, datadir=self.datadir)
 
         # generate the stem for output file and display filename
         self.updatefilename()
@@ -115,37 +116,44 @@ class EigerGUI(QtWidgets.QMainWindow):
         
         layout = QtWidgets.QGridLayout()
 
-        layout.addWidget(QtWidgets.QLabel(text="Output dir:"), 0, 0)
-        self.le_outdir = QtWidgets.QLineEdit(text=self.outdir)
-        layout.addWidget(self.le_outdir, 0, 1)
+        layout.addWidget(QtWidgets.QLabel(text="Data Dir:"), 0, 0)
+        self.le_datadir = QtWidgets.QLineEdit(text=self.datadir)
+        layout.addWidget(self.le_datadir, 0, 1)
         pb = QtWidgets.QPushButton(text="Browse")
-        pb.clicked.connect(self.new_outdir)
+        pb.clicked.connect(self.new_datadir)
         layout.addWidget(pb, 0, 2)
 
-        layout.addWidget(QtWidgets.QLabel(text="Sample ID"), 1, 0)
+        layout.addWidget(QtWidgets.QLabel(text="Working Dir:"), 1, 0)
+        self.le_workdir = QtWidgets.QLineEdit(text=self.workdir)
+        layout.addWidget(self.le_workdir, 1, 1)
+        pb = QtWidgets.QPushButton(text="Browse")
+        pb.clicked.connect(self.new_workdir)
+        layout.addWidget(pb, 1, 2)
+
+        layout.addWidget(QtWidgets.QLabel(text="Sample ID"), 2, 0)
         le = QtWidgets.QLineEdit(maxLength=100)
         le.setValidator(QtGui.QRegularExpressionValidator(QtCore.QRegularExpression("[A-Za-z0-9-_:]{100}")))
         le.textChanged.connect(self.new_sampleId)
-        layout.addWidget(le, 1, 1)
+        layout.addWidget(le, 2, 1)
         
-        layout.addWidget(QtWidgets.QLabel("$id", self), 1, 2)
+        layout.addWidget(QtWidgets.QLabel("$id", self), 2, 2)
         self.lbl_armID = QtWidgets.QLabel("0")
-        layout.addWidget(self.lbl_armID, 1, 3)
+        layout.addWidget(self.lbl_armID, 2, 3)
         pb = QtWidgets.QPushButton("Update $id", self)
         pb.clicked.connect(self.updateId)
-        layout.addWidget(pb, 1, 4)
+        layout.addWidget(pb, 2, 4)
 
         pb= QtWidgets.QPushButton(text="list files")
         pb.clicked.connect(self.file_list)
-        layout.addWidget(pb, 2, 0)
+        layout.addWidget(pb, 3, 0)
 
         pb= QtWidgets.QPushButton(text="Download")
         pb.clicked.connect(self.download)
-        layout.addWidget(pb, 2, 1)
+        layout.addWidget(pb, 3, 1)
 
         pb= QtWidgets.QPushButton(text="Clear DCU files")
         pb.clicked.connect(self.clearfiles)
-        layout.addWidget(pb, 2, 2)
+        layout.addWidget(pb, 3, 2)
 
         my.setLayout(layout)
         return (my)
@@ -340,12 +348,17 @@ class EigerGUI(QtWidgets.QMainWindow):
     The following functions receive data from the GUI elements
     """
     @QtCore.pyqtSlot()
-    def new_outdir(self):
-        dd = QtWidgets.QFileDialog.getExistingDirectory(directory=self.outdir,  caption="Choose Directory")
-        self.outdir = dd
-        self.le_outdir.setText(dd)
+    def new_datadir(self):
+        dd = QtWidgets.QFileDialog.getExistingDirectory(directory=self.datadir,  caption="Choose Directory")
+        self.datadir = dd
+        self.le_datadir.setText(dd)
+    @QtCore.pyqtSlot()
+    def new_workdir(self):
+        dd = QtWidgets.QFileDialog.getExistingDirectory(directory=self.workdir,  caption="Choose Directory")
+        self.workdir = dd
+        self.le_workdir.setText(dd)
 
-    @QtCore.pyqtSlot(str)    
+    @QtCore.pyqtSlot(str)
     def new_sampleId(self, text):
         self.sampleID = text
         self.updatefilename()
@@ -446,7 +459,7 @@ class EigerGUI(QtWidgets.QMainWindow):
     def download(self):
         flist = self.detector.filelist()
         for f in flist:
-            self.detector.save_file(f, self.outdir)
+            self.detector.save_file(f, self.datadir)
 
     @QtCore.pyqtSlot()
     def clearfiles(self):
@@ -457,7 +470,7 @@ class EigerGUI(QtWidgets.QMainWindow):
         # make sure ID is up to date
         self.updateId()
         fname = f"PARAMS_{self.sampleID}_ID{str(self.armID)}.INP"
-        fname = os.path.join(self.outdir, fname)
+        fname = os.path.join(self.datadir, fname)
         nimg = int(self.scan_range / self.image_width)
         if self.source == "Cu":
             wavelength = 1.54184 # from APEX server listing
