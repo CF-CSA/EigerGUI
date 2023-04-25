@@ -78,7 +78,7 @@ class DetectorFrontend:
     start recording of data by enabling file writer. nimages must be set
     """
     def record(self):
-        "Disarm Detector, enable filewriter, arm, and triffer"
+        "trigger armed detector in background"
         triggerproc = mp.Process(target=self.detector_trigger)
         triggerproc.start()
 

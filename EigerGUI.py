@@ -24,7 +24,7 @@ class EigerGUI(QtWidgets.QMainWindow):
         super(EigerGUI, self).__init__()
 
         # list of parameters used for workflow
-#        self.outdir = os.path.join('D:', os.sep, 'frames', 'D8', 'screening')
+        # self.outdir = os.path.join('D:', os.sep, 'frames', 'D8', 'screening')
         self.datadir = os.path.join(os.sep, 'home', 'tg', 'univie', 'instruments', 'D8', 'EIGER2', 'data')
         self.workdir = os.path.join(os.sep, 'home', 'tg', 'univie', 'instruments', 'D8', 'EIGER2')
         self.sampleID = "YourSampleID_no_Spaces"
@@ -265,10 +265,6 @@ class EigerGUI(QtWidgets.QMainWindow):
         btn.clicked.connect(self.record)
         layout.addWidget(btn)
 
-        btn = QtWidgets.QPushButton("View", self)
-        btn.clicked.connect(self.view)
-        layout.addWidget(btn)
-        
         btn = QtWidgets.QPushButton("Stop", self)
         btn.clicked.connect(self.stop)
         layout.addWidget(btn)
@@ -310,14 +306,6 @@ class EigerGUI(QtWidgets.QMainWindow):
         self.xdsparams()
         self.update_state()
 
-    @QtCore.pyqtSlot()    
-    def view(self):
-        "Start viewing, without recording data"
-        self.updatefilename()
-        self.detector.view()
-        self.updateId()
-        print("Detector in view mode, not recording images")
-        
     @QtCore.pyqtSlot()
     def stop(self):
         "Stops recording, stops rotations"
