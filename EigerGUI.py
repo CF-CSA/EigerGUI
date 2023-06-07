@@ -41,6 +41,9 @@ class EigerGUI(QtWidgets.QMainWindow):
         # parameters with reasonable defaults
         self.frame_time= 1.0 #seconds
         self.s_per_degree = 1
+        self.triggermode = "ints"
+        self.ntriggers = 1
+        self.ntriggers_widget = QtWidgets.QSpinBox(self, value=self.ntriggers, minimum=1)
         #
 
         self.setGeometry(50, 50, 600, 500)
@@ -106,6 +109,18 @@ class EigerGUI(QtWidgets.QMainWindow):
         layout.addWidget(cb)
 
         vlayout.addLayout(layout)
+
+        layout=QtWidgets.QHBoxLayout()
+        layout.addWidget(QtWidgets.QLabel(text="Trigger Mode:"))
+        rb = QtWidgets.QRadioButton(text="INTS (manual trigger)")
+        rb.clicked.connect(lambda: self.new_tmode("ints"))
+        rb.setChecked(True)
+        layout.addWidget(rb)
+        rb = QtWidgets.QRadioButton(text="EXTS (trigger signal)")
+        rb.clicked.connect(lambda: self.new_tmode("exts"))
+        layout.addWidget(rb)
+        vlayout.addLayout(layout)
+        self.new_tmode(self.triggermode)
 
         my.setLayout(vlayout)
         return (my)
@@ -238,7 +253,6 @@ class EigerGUI(QtWidgets.QMainWindow):
         qc.setCurrentIndex(self.s_per_degree)
         layout.addWidget(qc, 2, 2)
 
-
         layout.addWidget(QtWidgets.QLabel(text="Exposure time: (APEX):"), 3, 0)
         apex_time = self.scan_range / self.image_width * self.frame_time
         self.lbl_apex_time = QtWidgets.QLabel(text=f"{apex_time:.2f}")
@@ -248,6 +262,15 @@ class EigerGUI(QtWidgets.QMainWindow):
         nimages = int (self.scan_range / self.image_width)
         self.lbl_nimages = QtWidgets.QLabel(text=f"{nimages}")
         layout.addWidget(self.lbl_nimages, 3, 3)
+
+        layout.addWidget(QtWidgets.QLabel(text="Exposure time: (Actual)"), 4, 0)
+
+        self.ntriggers_widget.valueChanged.connect(self.new_ntriggers)
+        if self.triggermode == "exts":
+            self.ntriggers_widget.setEnabled(1)
+        layout.addWidget(self.ntriggers_widget, 4, 1)
+
+
 
         my.setLayout(layout)
         return (my)
@@ -285,6 +308,7 @@ class EigerGUI(QtWidgets.QMainWindow):
             self.detector.stop()
         self.updatefilename()
         self.updateId()
+        self.detector.triggermode(self.triggermode, self.ntriggers)
         self.detector.set_frame_time(self.frame_time)
         self.detector.set_name_pattern(self.name_pattern)
         n = int(self.scan_range / self.image_width)
@@ -407,11 +431,22 @@ class EigerGUI(QtWidgets.QMainWindow):
     @QtCore.pyqtSlot("double")
     def new_distance(self, value):
         self.D_mm = value
-        
+
+    @QtCore.pyqtSlot()
+    def new_tmode(self, value):
+        self.triggermode = value
+        if value == "exts":
+            self.ntriggers_widget.setEnabled(1)
+        else:
+            self.ntriggers_widget.setEnabled(0)
+
     @QtCore.pyqtSlot("double")
     def new_twotheta(self, value):
         self.twoTheta = value
 
+    @QtCore.pyqtSlot("int")
+    def new_ntriggers(self, value):
+        self.ntriggers = value
     @QtCore.pyqtSlot("double")
     def new_omega(self, value):
         self.Omega = value

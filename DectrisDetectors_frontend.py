@@ -21,11 +21,11 @@ class DetectorFrontend:
     """
         Basic setup up. This will At startup, the detector has to be initialized first"
     """
-    def setup(self, datadir, frame_time=1.0, elements=["Mo", "Cu"]):
+    def setup(self, datadir, frame_time=1.0, elements=["Mo", "Cu"], tmode="ints"):
         #self.detector.send_command("initialize")
         "Basic settings"
         # we always use trigger mote 'ints'
-        self.detector.set_config("trigger_mode", "ints", "detector")
+        self.detector.set_config("trigger_mode", tmode, "detector")
         # save 10,000 frames per HDF5 file
         self.detector.set_config("nimages_per_file", value=999, iface="filewriter")
         # set to a very high number for continuous viewing
@@ -53,6 +53,13 @@ class DetectorFrontend:
     def filelist(self):
         flist = self.detector.get_status(iface='filewriter', param='data')
         return flist
+
+    """
+    set the trigger mode of the detector
+    """
+    def triggermode(self, tmode, ntrigger=1):
+        self.detector.set_config("trigger_mode", tmode, "detector")
+        self.detector.set_config("ntrigger", ntrigger, "detector")
 
     def detector_trigger(self):
         self.detector.send_command("trigger")
