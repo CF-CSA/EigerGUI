@@ -46,6 +46,10 @@ class EigerGUI(QtWidgets.QMainWindow):
         self.ntriggers_widget = QtWidgets.QSpinBox(self, value=self.ntriggers, minimum=1)
         #
 
+        # buttons that need to be disabled or enabled
+        self.btn_arm = QtWidgets.QPushButton("Arm", self)
+        self.btn_record = QtWidgets.QPushButton("Record", self)
+
         self.setGeometry(50, 50, 600, 500)
         self.setWindowTitle(f"EIGER2 R500 @ UniVie Bruker D8 {ip}")
         self.show()
@@ -279,13 +283,12 @@ class EigerGUI(QtWidgets.QMainWindow):
         my = QtWidgets.QWidget()
         layout = QtWidgets.QHBoxLayout()
 
-        btn = QtWidgets.QPushButton("Arm", self)
-        btn.clicked.connect(self.arm)
-        layout.addWidget(btn)
 
-        btn = QtWidgets.QPushButton("Record", self)
-        btn.clicked.connect(self.record)
-        layout.addWidget(btn)
+        self.btn_arm.clicked.connect(self.arm)
+        layout.addWidget(self.btn_arm)
+
+        self.btn_record.clicked.connect(self.record)
+        layout.addWidget(self.btn_record)
 
         btn = QtWidgets.QPushButton("Stop", self)
         btn.clicked.connect(self.stop)
@@ -436,8 +439,10 @@ class EigerGUI(QtWidgets.QMainWindow):
         self.triggermode = value
         if value == "exts":
             self.ntriggers_widget.setEnabled(1)
+            self.btn_record.setEnabled(0)
         else:
             self.ntriggers_widget.setEnabled(0)
+            self.btn_record.setEnabled(1)
 
     @QtCore.pyqtSlot("double")
     def new_twotheta(self, value):
