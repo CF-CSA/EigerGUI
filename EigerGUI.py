@@ -263,8 +263,7 @@ class EigerGUI(QtWidgets.QMainWindow):
         self.lbl_nimages = QtWidgets.QLabel(text=f"{nimages}")
         layout.addWidget(self.lbl_nimages, 3, 3)
 
-        layout.addWidget(QtWidgets.QLabel(text="Exposure time: (Actual)"), 4, 0)
-
+        layout.addWidget(QtWidgets.QLabel(text="# runs (ntrigger):"), 4, 0)
         self.ntriggers_widget.valueChanged.connect(self.new_ntriggers)
         if self.triggermode == "exts":
             self.ntriggers_widget.setEnabled(1)
