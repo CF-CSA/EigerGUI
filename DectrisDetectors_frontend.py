@@ -27,7 +27,7 @@ class DetectorFrontend:
         # we always use trigger mote 'ints'
         self.detector.set_config("trigger_mode", tmode, "detector")
         # save 10,000 frames per HDF5 file
-        self.detector.set_config("nimages_per_file", value=999, iface="filewriter")
+        self.detector.set_config("nimages_per_file", value=100000 iface="filewriter")
         # set to a very high number for continuous viewing
         self.detector.set_config("nimages", 10000, iface="detector")
         # default count and frame time: 100Hz
