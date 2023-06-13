@@ -6,6 +6,10 @@ class ExpFile:
         self.filename = filename
         self.runs = []
 
+    """
+    Bruker EXP looks close to JSON. Some conversions seem to make it compatible with JSON format
+    for reading it
+    """
     def readexp(self):
         with open(self.filename, 'r') as expfile:
             "remove header comment"
@@ -40,6 +44,14 @@ class ExpFile:
                 "create a list of active runs"
                 self.runs.append(run)
         print(f"Number of active runs: {len(self.runs)}")
+        for run in self.runs:
+            "start angle in parameters.end, end angles in end outside p"
+            print(f"Axis of run {run['angle']}")
+            print(f"Extracting parameters for this run:")
+            params = json.loads(json.dumps(run['p']))
+            offset = -1.32
+            print(f"Distance, corrected by offset {offset}: {params['dx'] + offset}")
+
         # a run as a subkeyword ['active'] which is 1 or 0
         # looping: for j in (self.json_runs):
         #  if j['active'] -> paramters in j['p']

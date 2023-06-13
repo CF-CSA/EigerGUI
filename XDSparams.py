@@ -7,6 +7,8 @@ subdirectories with XDS.INP
 class XDSparams:
     def __init__(self, xdstemplate):
         self.xdstempl= xdstemplate
+        self.wavelength = 1.541840 # default: CuKa
+        self.rotation_axis = [ 0, -1, 0] # default :positive rotation about omega
 
     """
     replace parameters in xdstemplate with given ones
