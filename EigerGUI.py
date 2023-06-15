@@ -6,6 +6,7 @@ Created on Fri Jan 13 22:46:21 2023
 @author: Tim Gruene
 """
 import os.path
+from os.path import exists
 
 from PyQt6 import (
         QtWidgets,
@@ -18,6 +19,9 @@ import time
 
 from DectrisDetectors_frontend import DetectorFrontend
 
+from BrukerExpFile import ExpFile
+from XDSparams import XDSparams
+
 class EigerGUI(QtWidgets.QMainWindow):
     "A simple GUI to run the Dectris SINGLA"
     def __init__(self, ip="131.130.27.207"):
@@ -27,6 +31,8 @@ class EigerGUI(QtWidgets.QMainWindow):
         # self.outdir = os.path.join('D:', os.sep, 'frames', 'D8', 'screening')
         self.datadir = os.path.join(os.sep, 'home', 'tg', 'univie', 'instruments', 'D8', 'EIGER2', 'data')
         self.workdir = os.path.join(os.sep, 'home', 'tg', 'univie', 'instruments', 'D8', 'EIGER2')
+        self.xdstemplate = "/xtal/Integration/XDS/CCSA-templates/XDS-D8-Eiger2R500.INP"
+        self.expfile = ""
         self.sampleID = "YourSampleID_no_Spaces"
         self.xID = 0
         self.armID = 0
@@ -41,7 +47,7 @@ class EigerGUI(QtWidgets.QMainWindow):
         # parameters with reasonable defaults
         self.frame_time= 1.0 #seconds
         self.s_per_degree = 1
-        self.triggermode = "ints"
+        self.triggermode = "exts"
         self.ntriggers = 1
         self.ntriggers_widget = QtWidgets.QSpinBox(self, value=self.ntriggers, minimum=1)
         #
@@ -72,6 +78,7 @@ class EigerGUI(QtWidgets.QMainWindow):
 
         layout.addWidget(self.outputfiles())
         layout.addWidget(self.screening())
+        layout.addWidget(self.SetupDataCollection())
         layout.addWidget(self.exp_geometry())
         # layout.addWidget(self.recSettings())
         layout.addWidget(self.control())
@@ -118,11 +125,16 @@ class EigerGUI(QtWidgets.QMainWindow):
         layout.addWidget(QtWidgets.QLabel(text="Trigger Mode:"))
         rb = QtWidgets.QRadioButton(text="INTS (manual trigger)")
         rb.clicked.connect(lambda: self.new_tmode("ints"))
+        rb.setChecked(False)
+        layout.addWidget(rb)
+        rb = QtWidgets.QRadioButton(text="EXTS (trigger each run)")
+        rb.clicked.connect(lambda: self.new_tmode("exts"))
         rb.setChecked(True)
         layout.addWidget(rb)
-        rb = QtWidgets.QRadioButton(text="EXTS (trigger signal)")
-        rb.clicked.connect(lambda: self.new_tmode("exts"))
-        layout.addWidget(rb)
+        "EXTE not yet implemented"
+#        rb = QtWidgets.QRadioButton(text="EXTE (trigger each frame)")
+#        rb.clicked.connect(lambda: self.new_tmode("exte"))
+#        layout.addWidget(rb)
         vlayout.addLayout(layout)
         self.new_tmode(self.triggermode)
 
@@ -130,7 +142,7 @@ class EigerGUI(QtWidgets.QMainWindow):
         return (my)
 
     def outputfiles(self):
-        "Setup measurement"
+        "Setup directories for output data and working dir"
         my = QtWidgets.QGroupBox("Output data")
         
         layout = QtWidgets.QGridLayout()
@@ -176,6 +188,31 @@ class EigerGUI(QtWidgets.QMainWindow):
 
         my.setLayout(layout)
         return (my)
+
+    @QtCore.pyqtSlot()
+    def process_exp(self):
+        "if exp-file exists, process it"
+        if not exists (self.expfile):
+            pass
+        self.experiment.extract()
+        self.ntriggers = len(self.experiment.runs)
+        self.ntriggers_widget.setValue(self.ntriggers)
+        self.new_tmode("exts")
+
+    """
+    Steps for setting up XDS
+    for each run:
+     create dir ID-nn
+     create XDS.INP
+      - update template (based on wavelength?)
+      - set geometry
+      - set up data_range (DATA_RANGE = (id-1)*nimages id*nimages
+      - write XDS.INP
+    """
+    @QtCore.pyqtSlot()
+    def setup_xds(self):
+        print ("Set up XDS files is work in progress")
+        pass
 
     """
     Geometry settings, need to be copied from APEX3Server
@@ -267,16 +304,46 @@ class EigerGUI(QtWidgets.QMainWindow):
         self.lbl_nimages = QtWidgets.QLabel(text=f"{nimages}")
         layout.addWidget(self.lbl_nimages, 3, 3)
 
-        layout.addWidget(QtWidgets.QLabel(text="# runs (ntrigger):"), 4, 0)
+        my.setLayout(layout)
+        return (my)
+
+    def SetupDataCollection(self):
+        "Setup actual measurement, ideally through Bruker EXP file"
+        my = QtWidgets.QGroupBox("Setup data Collection")
+
+        layout = QtWidgets.QGridLayout()
+
+        layout.addWidget(QtWidgets.QLabel(text="Bruker EXP file:"), 0, 0)
+        self.le_expfile = QtWidgets.QLineEdit(text=self.expfile)
+        layout.addWidget(self.le_expfile, 0, 1)
+        pb = QtWidgets.QPushButton(text="Browse")
+        pb.clicked.connect(self.new_expfile)
+        layout.addWidget(pb, 0, 2)
+
+        layout.addWidget(QtWidgets.QLabel(text="XDS.INP Template:"), 1, 0)
+        self.le_xdstemplate = QtWidgets.QLineEdit(text=self.xdstemplate)
+        layout.addWidget(self.le_xdstemplate, 1, 1)
+        pb = QtWidgets.QPushButton(text="Browse")
+        pb.clicked.connect(self.new_xdstemplate)
+        layout.addWidget(pb, 1, 2)
+
+        layout.addWidget(QtWidgets.QLabel(text="# runs (ntrigger):"), 2, 0)
         self.ntriggers_widget.valueChanged.connect(self.new_ntriggers)
         if self.triggermode == "exts":
             self.ntriggers_widget.setEnabled(1)
-        layout.addWidget(self.ntriggers_widget, 4, 1)
+        layout.addWidget(self.ntriggers_widget, 2, 1)
 
+        pb = QtWidgets.QPushButton(text="Process EXP")
+        pb.clicked.connect(self.process_exp)
+        layout.addWidget(pb, 3, 0)
 
+        pb = QtWidgets.QPushButton(text="Setup XDS")
+        pb.clicked.connect(self.setup_xds)
+        layout.addWidget(pb, 3, 1)
 
         my.setLayout(layout)
         return (my)
+
 
     def control(self):
         "control buttons at bottom of GUI"
@@ -367,6 +434,15 @@ class EigerGUI(QtWidgets.QMainWindow):
         self.datadir = dd
         self.le_datadir.setText(dd)
     @QtCore.pyqtSlot()
+    def new_expfile(self):
+        "Browse for Bruker Apex EXP file to setup up runs"
+        xf = QtWidgets.QFileDialog.getOpenFileName(caption="Choose EXP file", filter="*.exp", directory="/home/tg/univie/instruments/D8/EIGER2/data/CCSA/calibration")
+        if xf[0]:
+            self.expfile = xf[0]
+            self.le_expfile.setText(self.expfile)
+            self.experiment = ExpFile(self.expfile)
+
+    @QtCore.pyqtSlot()
     def new_workdir(self):
         dd = QtWidgets.QFileDialog.getExistingDirectory(directory=self.workdir,  caption="Choose Directory")
         self.workdir = dd
@@ -381,6 +457,14 @@ class EigerGUI(QtWidgets.QMainWindow):
     def new_xID(self, value):
         self.xID = value
         self.updatefilename()
+
+    @QtCore.pyqtSlot()
+    def new_xdstemplate(self):
+        "Browse for Bruker Apex EXP file to setup up runs"
+        xf = QtWidgets.QFileDialog.getOpenFileName(caption="Choose XDS.INP Template", filter="*.INP", directory="/xtal/Integration/XDS/CCSA-templates")
+        if xf[0]:
+            self.xdstemplate = xf[0]
+            self.le_xdstemplate.setText(self.xdstemplate)
 
     QtCore.pyqtSlot(str)
     def new_axis(self, value):

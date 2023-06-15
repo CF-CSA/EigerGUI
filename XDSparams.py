@@ -104,7 +104,7 @@ class XDSparams:
     """
     writes content of self.xdsinp into outdir as XDS.INP"""
     def xdswrite(self, outdir):
-        fn = outdir+os.path.sep()+XDS.INP"
+        fn = outdir+os.path.sep()+"XDS.INP"
         with open (fn, 'w') as f:
             f.write("! XDS.INP written by EigerGUI")
             for l in self.xdsinp:

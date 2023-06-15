@@ -7,6 +7,12 @@ class ExpFile:
         self.runs = []
 
     """
+    wrapper that calls all necessary functions to extract information from EXP-file
+    """
+    def extract(self):
+        self.readexp()
+        self.getinfo()
+    """
     Bruker EXP looks close to JSON. Some conversions seem to make it compatible with JSON format
     for reading it
     """
@@ -15,6 +21,8 @@ class ExpFile:
             "remove header comment"
             jsondata = ''.join(line for line in expfile if not line.startswith('#'))
             "replace invalid json values"
+            jsondata = jsondata.replace(" ('replace',", "")
+            jsondata = jsondata.replace(")", "")
             jsondata = jsondata.replace("'", "\"")
             jsondata = jsondata.replace("None", "\"None\"")
             jsondata = jsondata.replace("True", "1")
@@ -30,7 +38,7 @@ class ExpFile:
         " debugging: print wavelength"
         self.wavelength = wl['wavelength']
         print (f"Lambda = {self.wavelength}")
-        self.json_runs = json.loads(json.dumps(self.exp[1:-1]))
+        self.json_runs = json.loads(json.dumps(self.exp[1:]))
         """
         access information in self.json_runs with e.g.
         run = self.json_runs[0]['p']['chi']
@@ -39,18 +47,37 @@ class ExpFile:
         keys: attenutation, sensitivity, frametime, readout,step, active, end, angle
         keys in p: phi, type (?),dx (Delta), chi,theta, omega
         """
+        apexruns = []
         for run in self.json_runs:
             if run['active']:
                 "create a list of active runs"
-                self.runs.append(run)
-        print(f"Number of active runs: {len(self.runs)}")
-        for run in self.runs:
+                apexruns.append(run)
+            else:
+                print(f"Inactive run: {run}")
+        print(f"Number of apexruns: {len(apexruns)}")
+        "convert run structure to something reasonable for easier processing"
+        for run in apexruns:
             "start angle in parameters.end, end angles in end outside p"
-            print(f"Axis of run {run['angle']}")
-            print(f"Extracting parameters for this run:")
             params = json.loads(json.dumps(run['p']))
-            offset = -1.32
-            print(f"Distance, corrected by offset {offset}: {params['dx'] + offset}")
+            myrun = {}
+            ft = run['frametime']
+            if not ft == "None":
+                myrun['frametime'] = float(ft)
+            myrun['angle'] = run['angle']
+            myrun['start'] = run['start']
+            myrun['end'] = run['end']
+            myrun['phi'] = params['phi']
+            myrun['distance'] = params['dx']
+            myrun['chi'] = params['chi']
+            myrun['theta'] = params['theta']
+            myrun['omega'] = params['omega']
+            if not 'frametime' in myrun:
+                print("frametime not given, take from GUI")
+            else:
+                print(f"frametime = {myrun['frametime']}s")
+            self.runs.append(myrun)
+        print(f"Number of active runs: {len(self.runs)}")
+
 
         # a run as a subkeyword ['active'] which is 1 or 0
         # looping: for j in (self.json_runs):
