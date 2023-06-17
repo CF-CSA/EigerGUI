@@ -8,11 +8,7 @@ Created on Fri Jan 13 22:46:21 2023
 import os.path
 from os.path import exists
 
-from PyQt6 import (
-        QtWidgets,
-        QtGui,
-        QtCore
-        )
+from PyQt6 import QtWidgets, QtGui, QtCore
 
 import sys
 import time
@@ -22,15 +18,21 @@ from DectrisDetectors_frontend import DetectorFrontend
 from BrukerExpFile import ExpFile
 from XDSparams import XDSparams
 
+
 class EigerGUI(QtWidgets.QMainWindow):
     "A simple GUI to run the Dectris SINGLA"
+
     def __init__(self, ip="131.130.27.207"):
         super(EigerGUI, self).__init__()
 
         # list of parameters used for workflow
         # self.outdir = os.path.join('D:', os.sep, 'frames', 'D8', 'screening')
-        self.datadir = os.path.join(os.sep, 'home', 'tg', 'univie', 'instruments', 'D8', 'EIGER2', 'data')
-        self.workdir = os.path.join(os.sep, 'home', 'tg', 'univie', 'instruments', 'D8', 'EIGER2')
+        self.datadir = os.path.join(
+            os.sep, "home", "tg", "univie", "instruments", "D8", "EIGER2", "data"
+        )
+        self.workdir = os.path.join(
+            os.sep, "home", "tg", "univie", "instruments", "D8", "EIGER2"
+        )
         self.xdstemplate = "/xtal/Integration/XDS/CCSA-templates/XDS-D8-Eiger2R500.INP"
         self.expfile = ""
         self.sampleID = "YourSampleID_no_Spaces"
@@ -41,15 +43,18 @@ class EigerGUI(QtWidgets.QMainWindow):
         self.Omega = 60.0
         self.Phi = 0.0
         self.Chi = -35.0
-        self.D_mm = 34 #mm
+        self.D_mm = 34  # mm
         self.Axis = "OMEGA"
         self.source = "Cu"
         # parameters with reasonable defaults
-        self.frame_time= 1.0 #seconds
+        self.frame_time = 1.0  # seconds
         self.s_per_degree = 1
+        self.nimages = 0
         self.triggermode = "exts"
         self.ntriggers = 1
-        self.ntriggers_widget = QtWidgets.QSpinBox(self, value=self.ntriggers, minimum=1)
+        self.ntriggers_widget = QtWidgets.QSpinBox(
+            self, value=self.ntriggers, minimum=1
+        )
         #
 
         # buttons that need to be disabled or enabled
@@ -70,7 +75,6 @@ class EigerGUI(QtWidgets.QMainWindow):
         self.updatefilename()
         self.setup()
 
-
     def setup(self):
         layout = QtWidgets.QVBoxLayout()
 
@@ -86,19 +90,20 @@ class EigerGUI(QtWidgets.QMainWindow):
         main = QtWidgets.QWidget()
         main.setLayout(layout)
         self.setCentralWidget(main)
-        
 
     def detector_info(self):
         "Show IP address of detector, status, etc"
         my = QtWidgets.QGroupBox("Detector Info")
 
-        layout=QtWidgets.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout()
 
         layout.addWidget(QtWidgets.QLabel(text="IP:"))
         layout.addWidget(QtWidgets.QLabel(text=self.detector.detector.ip_))
 
         layout.addWidget(QtWidgets.QLabel(text="Status:"))
-        self.det_state = QtWidgets.QLabel(text="idle") #self.detector.get_state('detector'))
+        self.det_state = QtWidgets.QLabel(
+            text="idle"
+        )  # self.detector.get_state('detector'))
         layout.addWidget(self.det_state)
         btn = QtWidgets.QPushButton(text="Update")
         btn.clicked.connect(self.update_state)
@@ -108,10 +113,10 @@ class EigerGUI(QtWidgets.QMainWindow):
         btn.clicked.connect(lambda: self.detector.initialize())
         layout.addWidget(btn)
 
-        vlayout=QtWidgets.QVBoxLayout()
+        vlayout = QtWidgets.QVBoxLayout()
         vlayout.addLayout(layout)
 
-        layout=QtWidgets.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout()
         layout.addWidget(QtWidgets.QLabel(text="Select source:"))
         cb = QtWidgets.QComboBox()
         cb.addItems(["Mo", "Cu"])
@@ -121,7 +126,7 @@ class EigerGUI(QtWidgets.QMainWindow):
 
         vlayout.addLayout(layout)
 
-        layout=QtWidgets.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout()
         layout.addWidget(QtWidgets.QLabel(text="Trigger Mode:"))
         rb = QtWidgets.QRadioButton(text="INTS (manual trigger)")
         rb.clicked.connect(lambda: self.new_tmode("ints"))
@@ -132,19 +137,19 @@ class EigerGUI(QtWidgets.QMainWindow):
         rb.setChecked(True)
         layout.addWidget(rb)
         "EXTE not yet implemented"
-#        rb = QtWidgets.QRadioButton(text="EXTE (trigger each frame)")
-#        rb.clicked.connect(lambda: self.new_tmode("exte"))
-#        layout.addWidget(rb)
+        #        rb = QtWidgets.QRadioButton(text="EXTE (trigger each frame)")
+        #        rb.clicked.connect(lambda: self.new_tmode("exte"))
+        #        layout.addWidget(rb)
         vlayout.addLayout(layout)
         self.new_tmode(self.triggermode)
 
         my.setLayout(vlayout)
-        return (my)
+        return my
 
     def outputfiles(self):
         "Setup directories for output data and working dir"
         my = QtWidgets.QGroupBox("Output data")
-        
+
         layout = QtWidgets.QGridLayout()
 
         layout.addWidget(QtWidgets.QLabel(text="Data Dir:"), 0, 0)
@@ -163,10 +168,14 @@ class EigerGUI(QtWidgets.QMainWindow):
 
         layout.addWidget(QtWidgets.QLabel(text="Sample ID"), 2, 0)
         le = QtWidgets.QLineEdit(maxLength=100)
-        le.setValidator(QtGui.QRegularExpressionValidator(QtCore.QRegularExpression("[A-Za-z0-9-_:]{100}")))
+        le.setValidator(
+            QtGui.QRegularExpressionValidator(
+                QtCore.QRegularExpression("[A-Za-z0-9-_:]{100}")
+            )
+        )
         le.textChanged.connect(self.new_sampleId)
         layout.addWidget(le, 2, 1)
-        
+
         layout.addWidget(QtWidgets.QLabel("$id", self), 2, 2)
         self.lbl_armID = QtWidgets.QLabel("0")
         layout.addWidget(self.lbl_armID, 2, 3)
@@ -174,25 +183,25 @@ class EigerGUI(QtWidgets.QMainWindow):
         pb.clicked.connect(self.updateId)
         layout.addWidget(pb, 2, 4)
 
-        pb= QtWidgets.QPushButton(text="list files")
+        pb = QtWidgets.QPushButton(text="list files")
         pb.clicked.connect(self.file_list)
         layout.addWidget(pb, 3, 0)
 
-        pb= QtWidgets.QPushButton(text="Download")
+        pb = QtWidgets.QPushButton(text="Download")
         pb.clicked.connect(self.download)
         layout.addWidget(pb, 3, 1)
 
-        pb= QtWidgets.QPushButton(text="Clear DCU files")
+        pb = QtWidgets.QPushButton(text="Clear DCU files")
         pb.clicked.connect(self.clearfiles)
         layout.addWidget(pb, 3, 2)
 
         my.setLayout(layout)
-        return (my)
+        return my
 
     @QtCore.pyqtSlot()
     def process_exp(self):
         "if exp-file exists, process it"
-        if not exists (self.expfile):
+        if not exists(self.expfile):
             pass
         self.experiment.extract()
         self.ntriggers = len(self.experiment.runs)
@@ -209,17 +218,32 @@ class EigerGUI(QtWidgets.QMainWindow):
       - set up data_range (DATA_RANGE = (id-1)*nimages id*nimages
       - write XDS.INP
     """
+
     @QtCore.pyqtSlot()
     def setup_xds(self):
-        print ("Set up XDS files is work in progress")
+
+        for idx, run in enumerate(self.experiment.runs):
+            rundir = self.workdir+os.path.sep()+f"run{idx+1:02d}"
+            name_template = self.detector.get_name_pattern()
+            data_range = f"{(idx-1)*self.nimages} {idx*self.nimages}"
+            xds=XDSparams(self.xdstemplate, name_template, data_range)
+            dir = np.sign(run['end'] - run['start'])
+            xds.settings(self.image_width, run['wavelength'], run['theta'], run['axis'], run['omega'], run['chi'], dir, run['start'])
+            xds.update()
+            xds.xdswrite(rundir)
+
+        print("Set up XDS files is work in progress")
         pass
 
     """
     Geometry settings, need to be copied from APEX3Server
     """
+
     def exp_geometry(self):
         "Setup measurement"
-        my = QtWidgets.QGroupBox("Experimental Geometry (update manually from APEX Server")
+        my = QtWidgets.QGroupBox(
+            "Experimental Geometry (update manually from APEX Server"
+        )
 
         layout = QtWidgets.QGridLayout()
 
@@ -230,7 +254,9 @@ class EigerGUI(QtWidgets.QMainWindow):
         layout.addWidget(db, 0, 1)
 
         layout.addWidget(QtWidgets.QLabel(text="2Theta:"), 0, 2)
-        db = QtWidgets.QDoubleSpinBox(self, value=self.twoTheta, minimum=-180, maximum=180)
+        db = QtWidgets.QDoubleSpinBox(
+            self, value=self.twoTheta, minimum=-180, maximum=180
+        )
         db.setSuffix("°")
         db.valueChanged.connect(self.new_twotheta)
         layout.addWidget(db, 0, 3)
@@ -242,7 +268,9 @@ class EigerGUI(QtWidgets.QMainWindow):
         layout.addWidget(db, 0, 5)
 
         layout.addWidget(QtWidgets.QLabel(text="Phi"))
-        db = QtWidgets.QDoubleSpinBox(self, value=self.Phi, minimum=-180.0, maximum=360.0)
+        db = QtWidgets.QDoubleSpinBox(
+            self, value=self.Phi, minimum=-180.0, maximum=360.0
+        )
         db.setSuffix("°")
         db.valueChanged.connect(self.new_phi)
         layout.addWidget(db)
@@ -264,27 +292,34 @@ class EigerGUI(QtWidgets.QMainWindow):
         self.new_axis(self.Axis)
 
         my.setLayout(layout)
-        return (my)
+        return my
 
     """ 
     Settings for screening
     """
+
     def screening(self):
         my = QtWidgets.QGroupBox("Screen Sample")
         layout = QtWidgets.QGridLayout()
 
         layout.addWidget(QtWidgets.QLabel(text="Scan Range: (APEX)"), 0, 0)
-        sb = QtWidgets.QDoubleSpinBox(self, value=self.scan_range, minimum=0.1, maximum=360 )
+        sb = QtWidgets.QDoubleSpinBox(
+            self, value=self.scan_range, minimum=0.1, maximum=360
+        )
         sb.valueChanged.connect(self.new_scan_range)
         layout.addWidget(sb, 0, 1)
 
         layout.addWidget(QtWidgets.QLabel(text="Image Width: (Actual)"), 1, 0)
-        sb = QtWidgets.QDoubleSpinBox(self, value=self.image_width, minimum=0.1, maximum=2)
+        sb = QtWidgets.QDoubleSpinBox(
+            self, value=self.image_width, minimum=0.1, maximum=2
+        )
         sb.valueChanged.connect(self.new_image_width)
         layout.addWidget(sb, 1, 1)
 
         layout.addWidget(QtWidgets.QLabel(text="Exposure time: (Actual)"), 2, 0)
-        sb = QtWidgets.QDoubleSpinBox(self, value=self.frame_time, minimum=0.025, maximum=360000)
+        sb = QtWidgets.QDoubleSpinBox(
+            self, value=self.frame_time, minimum=0.025, maximum=360000
+        )
         sb.valueChanged.connect(self.new_frame_time)
         layout.addWidget(sb, 2, 1)
 
@@ -300,12 +335,12 @@ class EigerGUI(QtWidgets.QMainWindow):
         layout.addWidget(self.lbl_apex_time, 3, 1)
 
         layout.addWidget(QtWidgets.QLabel(text="nimages: (actual):"), 3, 2)
-        nimages = int (self.scan_range / self.image_width)
-        self.lbl_nimages = QtWidgets.QLabel(text=f"{nimages}")
+        self.nimages = int(self.scan_range / self.image_width)
+        self.lbl_nimages = QtWidgets.QLabel(text=f"{self.nimages}")
         layout.addWidget(self.lbl_nimages, 3, 3)
 
         my.setLayout(layout)
-        return (my)
+        return my
 
     def SetupDataCollection(self):
         "Setup actual measurement, ideally through Bruker EXP file"
@@ -342,14 +377,12 @@ class EigerGUI(QtWidgets.QMainWindow):
         layout.addWidget(pb, 3, 1)
 
         my.setLayout(layout)
-        return (my)
-
+        return my
 
     def control(self):
         "control buttons at bottom of GUI"
         my = QtWidgets.QWidget()
         layout = QtWidgets.QHBoxLayout()
-
 
         self.btn_arm.clicked.connect(self.arm)
         layout.addWidget(self.btn_arm)
@@ -361,15 +394,14 @@ class EigerGUI(QtWidgets.QMainWindow):
         btn.clicked.connect(self.stop)
         layout.addWidget(btn)
 
-
         btn = QtWidgets.QPushButton("Quit", self)
         btn.clicked.connect(self.quitgui)
         layout.addWidget(btn)
-        
+
         my.setLayout(layout)
-        return (my)
-        
-    @QtCore.pyqtSlot()    
+        return my
+
+    @QtCore.pyqtSlot()
     def arm(self):
         "Prepares the recording of data"
         s = self.update_state()
@@ -380,13 +412,14 @@ class EigerGUI(QtWidgets.QMainWindow):
         self.detector.triggermode(self.triggermode, self.ntriggers)
         self.detector.set_frame_time(self.frame_time)
         self.detector.set_name_pattern(self.name_pattern)
-        n = int(self.scan_range / self.image_width)
-        self.detector.set_nimages(n)
+        self.nimages = int(self.scan_range / self.image_width)
+        self.detector.set_nimages(self.nimages)
         self.detector.detector.set_config("mode", "enabled", "filewriter")
         self.detector.arm()
         self.update_state()
         self.updateId()
-
+        # probably a try block reasonable in case user forgot to provide some information
+        self.setup_xds()
 
     @QtCore.pyqtSlot()
     def record(self):
@@ -395,7 +428,7 @@ class EigerGUI(QtWidgets.QMainWindow):
         if s == "ready":
             self.detector.record()
         else:
-            print ("Error: detector needs to be armed first")
+            print("Error: detector needs to be armed first")
         self.xdsparams()
         self.update_state()
 
@@ -405,9 +438,9 @@ class EigerGUI(QtWidgets.QMainWindow):
         self.detector.stop()
         self.updateId()
         self.update_state()
-        print ("Detector disarmed")
-        
-    @QtCore.pyqtSlot()    
+        print("Detector disarmed")
+
+    @QtCore.pyqtSlot()
     def quitgui(self):
         "Stop the detector, then quit GUI"
         self.detector.stop()
@@ -418,25 +451,33 @@ class EigerGUI(QtWidgets.QMainWindow):
     Therefore, this function should be called by the record button
     before starting data recording
     """
-    @QtCore.pyqtSlot()    
+
+    @QtCore.pyqtSlot()
     def updatefilename(self):
         "generate the filename string displayed in GUI"
         now = time.strftime("_%Y-%m-%d_%H%M%S")
-        self.name_pattern = self.sampleID+"_ID-$id"+now
-
+        self.name_pattern = self.sampleID + "_ID-$id" + now
 
     """
     The following functions receive data from the GUI elements
     """
+
     @QtCore.pyqtSlot()
     def new_datadir(self):
-        dd = QtWidgets.QFileDialog.getExistingDirectory(directory=self.datadir,  caption="Choose Directory")
+        dd = QtWidgets.QFileDialog.getExistingDirectory(
+            directory=self.datadir, caption="Choose Directory"
+        )
         self.datadir = dd
         self.le_datadir.setText(dd)
+
     @QtCore.pyqtSlot()
     def new_expfile(self):
         "Browse for Bruker Apex EXP file to setup up runs"
-        xf = QtWidgets.QFileDialog.getOpenFileName(caption="Choose EXP file", filter="*.exp", directory="/home/tg/univie/instruments/D8/EIGER2/data/CCSA/calibration")
+        xf = QtWidgets.QFileDialog.getOpenFileName(
+            caption="Choose EXP file",
+            filter="*.exp",
+            directory="/home/tg/univie/instruments/D8/EIGER2/data/CCSA/calibration",
+        )
         if xf[0]:
             self.expfile = xf[0]
             self.le_expfile.setText(self.expfile)
@@ -444,7 +485,9 @@ class EigerGUI(QtWidgets.QMainWindow):
 
     @QtCore.pyqtSlot()
     def new_workdir(self):
-        dd = QtWidgets.QFileDialog.getExistingDirectory(directory=self.workdir,  caption="Choose Directory")
+        dd = QtWidgets.QFileDialog.getExistingDirectory(
+            directory=self.workdir, caption="Choose Directory"
+        )
         self.workdir = dd
         self.le_workdir.setText(dd)
 
@@ -452,8 +495,8 @@ class EigerGUI(QtWidgets.QMainWindow):
     def new_sampleId(self, text):
         self.sampleID = text
         self.updatefilename()
-        
-    @QtCore.pyqtSlot(int)    
+
+    @QtCore.pyqtSlot(int)
     def new_xID(self, value):
         self.xID = value
         self.updatefilename()
@@ -461,15 +504,20 @@ class EigerGUI(QtWidgets.QMainWindow):
     @QtCore.pyqtSlot()
     def new_xdstemplate(self):
         "Browse for Bruker Apex EXP file to setup up runs"
-        xf = QtWidgets.QFileDialog.getOpenFileName(caption="Choose XDS.INP Template", filter="*.INP", directory="/xtal/Integration/XDS/CCSA-templates")
+        xf = QtWidgets.QFileDialog.getOpenFileName(
+            caption="Choose XDS.INP Template",
+            filter="*.INP",
+            directory="/xtal/Integration/XDS/CCSA-templates",
+        )
         if xf[0]:
             self.xdstemplate = xf[0]
             self.le_xdstemplate.setText(self.xdstemplate)
 
     QtCore.pyqtSlot(str)
+
     def new_axis(self, value):
         self.Axis = value
-        
+
     @QtCore.pyqtSlot()
     def updateId(self):
         "retrieve the current ID from Detector"
@@ -480,11 +528,10 @@ class EigerGUI(QtWidgets.QMainWindow):
     @QtCore.pyqtSlot("double")
     def new_frame_time(self, value):
         self.frame_time = value
-        nimages   = int (self.scan_range / self.image_width)
+        nimages = int(self.scan_range / self.image_width)
         apex_time = nimages * self.frame_time
         self.lbl_nimages.setText(f"{nimages}")
         self.lbl_apex_time.setText(f"{apex_time:.2f}")
-
 
     @QtCore.pyqtSlot("int")
     def new_exposure_unit(self, value):
@@ -496,7 +543,7 @@ class EigerGUI(QtWidgets.QMainWindow):
     @QtCore.pyqtSlot("double")
     def new_scan_range(self, value):
         self.scan_range = value
-        nimages   = int (self.scan_range / self.image_width)
+        nimages = int(self.scan_range / self.image_width)
         apex_time = nimages * self.frame_time
         self.lbl_nimages.setText(f"{nimages}")
         self.lbl_apex_time.setText(f"{apex_time:.2f}")
@@ -504,7 +551,7 @@ class EigerGUI(QtWidgets.QMainWindow):
     @QtCore.pyqtSlot("double")
     def new_image_width(self, value):
         self.image_width = value
-        nimages   = int (self.scan_range / self.image_width)
+        nimages = int(self.scan_range / self.image_width)
         apex_time = nimages * self.frame_time
         self.lbl_nimages.setText(f"{nimages}")
         self.lbl_apex_time.setText(f"{apex_time:.2f}")
@@ -513,7 +560,7 @@ class EigerGUI(QtWidgets.QMainWindow):
     def new_phidot(self, rate=2.0):
         self.phidot = rate
         print("New rate: {}".format(self.phidot))
-        
+
     @QtCore.pyqtSlot("double")
     def new_distance(self, value):
         self.D_mm = value
@@ -535,6 +582,7 @@ class EigerGUI(QtWidgets.QMainWindow):
     @QtCore.pyqtSlot("int")
     def new_ntriggers(self, value):
         self.ntriggers = value
+
     @QtCore.pyqtSlot("double")
     def new_omega(self, value):
         self.Omega = value
@@ -562,9 +610,9 @@ class EigerGUI(QtWidgets.QMainWindow):
     @QtCore.pyqtSlot()
     def file_list(self):
         flist = self.detector.filelist()
-        print (f"Number of files on DCU: {len(flist)}")
+        print(f"Number of files on DCU: {len(flist)}")
         for f in flist:
-            print (f"{f}")
+            print(f"{f}")
 
     @QtCore.pyqtSlot()
     def download(self):
@@ -574,7 +622,7 @@ class EigerGUI(QtWidgets.QMainWindow):
 
     @QtCore.pyqtSlot()
     def clearfiles(self):
-        print ("Deleting files on DCU")
+        print("Deleting files on DCU")
         self.detector.clear_files()
 
     def xdsparams(self):
@@ -584,14 +632,14 @@ class EigerGUI(QtWidgets.QMainWindow):
         fname = os.path.join(self.datadir, fname)
         nimg = int(self.scan_range / self.image_width)
         if self.source == "Cu":
-            wavelength = 1.54184 # from APEX server listing
+            wavelength = 1.54184  # from APEX server listing
         else:
             wavelength = 0.70931
 
         name_pattern = self.detector.get_name_pattern()
-        name_pattern = name_pattern.replace('$id', str(self.armID))
+        name_pattern = name_pattern.replace("$id", str(self.armID))
 
-        with open(fname, 'w') as f:
+        with open(fname, "w") as f:
             f.write(f"DETECTOR_DISTANCE= {self.D_mm}\n")
             f.write(f"2THETA= {self.twoTheta}\n")
             f.write(f"OMEGA= {self.Omega}\n")
@@ -603,7 +651,7 @@ class EigerGUI(QtWidgets.QMainWindow):
             f.write(f"DATA_RANGE= 2 {str(nimg-1)}\n")
             f.write(f"X-RAY_WAVELENGTH= {wavelength:.5f}\n")
             f.write(f"NAME_TEMPLATE_OF_DATA_FRAMES= {name_pattern}_??????.h5\n")
-        print (f"Parameters for sfrmtools written to {fname}\n")
+        print(f"Parameters for sfrmtools written to {fname}\n")
 
 
 if __name__ == "__main__":
@@ -611,4 +659,3 @@ if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     eigerGui = EigerGUI()
     app.exec()
-        

@@ -1,7 +1,9 @@
 import json
 
+
 class ExpFile:
     "Read and process experimental description file from Bruker"
+
     def __init__(self, filename):
         self.filename = filename
         self.runs = []
@@ -9,35 +11,39 @@ class ExpFile:
     """
     wrapper that calls all necessary functions to extract information from EXP-file
     """
+
     def extract(self):
         self.readexp()
         self.getinfo()
+
     """
     Bruker EXP looks close to JSON. Some conversions seem to make it compatible with JSON format
     for reading it
     """
+
     def readexp(self):
-        with open(self.filename, 'r') as expfile:
+        with open(self.filename, "r") as expfile:
             "remove header comment"
-            jsondata = ''.join(line for line in expfile if not line.startswith('#'))
+            jsondata = "".join(line for line in expfile if not line.startswith("#"))
             "replace invalid json values"
             jsondata = jsondata.replace(" ('replace',", "")
             jsondata = jsondata.replace(")", "")
-            jsondata = jsondata.replace("'", "\"")
-            jsondata = jsondata.replace("None", "\"None\"")
+            jsondata = jsondata.replace("'", '"')
+            jsondata = jsondata.replace("None", '"None"')
             jsondata = jsondata.replace("True", "1")
             jsondata = jsondata.replace("False", "0")
             allexp = json.loads(jsondata)
-            self.exp = allexp['scanset']
+            self.exp = allexp["scanset"]
 
     """
     extract information from runs
     """
+
     def getinfo(self):
         wl = json.loads(json.dumps(self.exp[0]))
         " debugging: print wavelength"
-        self.wavelength = wl['wavelength']
-        print (f"Lambda = {self.wavelength}")
+        self.wavelength = wl["wavelength"]
+        print(f"Lambda = {self.wavelength}")
         self.json_runs = json.loads(json.dumps(self.exp[1:]))
         """
         access information in self.json_runs with e.g.
@@ -49,7 +55,7 @@ class ExpFile:
         """
         apexruns = []
         for run in self.json_runs:
-            if run['active']:
+            if run["active"]:
                 "create a list of active runs"
                 apexruns.append(run)
             else:
@@ -58,26 +64,25 @@ class ExpFile:
         "convert run structure to something reasonable for easier processing"
         for run in apexruns:
             "start angle in parameters.end, end angles in end outside p"
-            params = json.loads(json.dumps(run['p']))
+            params = json.loads(json.dumps(run["p"]))
             myrun = {}
-            ft = run['frametime']
+            ft = run["frametime"]
             if not ft == "None":
-                myrun['frametime'] = float(ft)
-            myrun['angle'] = run['angle']
-            myrun['start'] = run['start']
-            myrun['end'] = run['end']
-            myrun['phi'] = params['phi']
-            myrun['distance'] = params['dx']
-            myrun['chi'] = params['chi']
-            myrun['theta'] = params['theta']
-            myrun['omega'] = params['omega']
-            if not 'frametime' in myrun:
+                myrun["frametime"] = float(ft)
+            myrun["angle"] = run["angle"]
+            myrun["start"] = run["start"]
+            myrun["end"] = run["end"]
+            myrun["phi"] = params["phi"]
+            myrun["distance"] = params["dx"]
+            myrun["chi"] = params["chi"]
+            myrun["theta"] = params["theta"]
+            myrun["omega"] = params["omega"]
+            if not "frametime" in myrun:
                 print("frametime not given, take from GUI")
             else:
                 print(f"frametime = {myrun['frametime']}s")
             self.runs.append(myrun)
         print(f"Number of active runs: {len(self.runs)}")
-
 
         # a run as a subkeyword ['active'] which is 1 or 0
         # looping: for j in (self.json_runs):
