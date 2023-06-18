@@ -227,6 +227,11 @@ class EigerGUI(QtWidgets.QMainWindow):
             name_template = self.detector.get_name_pattern()
             data_range = f"{(idx-1)*self.nimages} {idx*self.nimages}"
             xds=XDSparams(self.xdstemplate, name_template, data_range)
+            if "runtime" in run:
+                "Check consistency between EXP-file and GUI"
+                rt_Dectris = self.frame_time*self.nimages
+                if abs(rt_Dectris - run["runtime"]) > 0.001:
+                    raise ValueError("Inconsistency between EXP and GUI frame time")
             dir = np.sign(run['end'] - run['start'])
             xds.settings(self.image_width, run['wavelength'], run['theta'], run['axis'], run['omega'], run['chi'], dir, run['start'])
             xds.update()

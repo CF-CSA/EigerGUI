@@ -69,6 +69,9 @@ class ExpFile:
             ft = run["frametime"]
             if not ft == "None":
                 myrun["frametime"] = float(ft)
+            fa = run["frameangle"]
+            if not fa == "None":
+                myrun["frameangle"] = float(fa)
             myrun["angle"] = run["angle"]
             myrun["start"] = run["start"]
             myrun["end"] = run["end"]
@@ -77,10 +80,11 @@ class ExpFile:
             myrun["chi"] = params["chi"]
             myrun["theta"] = params["theta"]
             myrun["omega"] = params["omega"]
-            if not "frametime" in myrun:
-                print("frametime not given, take from GUI")
-            else:
+            if "frametime" in myrun and "frameangle" in myrun:
+                myrun['runtime'] = myrun["frametime"] * (myrun["end"] - myrun["start"])/
                 print(f"frametime = {myrun['frametime']}s")
+            else:
+                print("Cannot calculate runtime take from GUI")
             self.runs.append(myrun)
         print(f"Number of active runs: {len(self.runs)}")
 
