@@ -9,8 +9,7 @@ subdirectories with XDS.INP
 
 
 class XDSparams:
-    def __init__(self, xdstemplate, name_template, data_range):
-        self.xdstemplate = xdstemplate
+    def __init__(self, name_template, data_range):
         self.param_list = [
             ("NAME_TEMPLATE_DATA_FRAMES=", f"{name_template}"),
             ("DATA_RANGE=", f"{data_range}"),
@@ -40,9 +39,9 @@ class XDSparams:
     and param_list needs to be populated with keywords and values
     """
 
-    def update(self):
+    def update(self,xdstemplate):
         self.xdsinp = []  # empty XDS.INP
-        with open(self.xdstemplate, "r") as f:
+        with open(xdstemplate, "r") as f:
             for line in f:
                 [keyw, rem] = self.uncomment(line)
                 for p in self.param_list:
@@ -50,6 +49,7 @@ class XDSparams:
                     val = p[1]
                     keyw = self.replace(keyw, key, val)
                     self.xdsinp.append(" " + keyw + " " + rem)
+        print(f"replaced parameters: {self.done_params}")
         leftovers = set(self.param_list) - set(self.done_params)
         for others in leftovers:
             self.xdsinp.append(f" {others[0]} {others[1]}")
@@ -80,7 +80,7 @@ class XDSparams:
         if keyw in line:
             line = " " + keyw + " " + str(val)
             # keep track of replaced parameters
-            self.done_params.append([(keyw, val)])
+            self.done_params.append( (keyw, val) )
         else:
             line = line
         return line

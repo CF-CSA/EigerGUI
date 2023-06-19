@@ -225,7 +225,7 @@ class EigerGUI(QtWidgets.QMainWindow):
             rundir = self.workdir+os.path.sep+f"run{idx+1:02d}"
             name_template = self.detector.get_name_pattern()
             data_range = f"{(idx-1)*self.nimages} {idx*self.nimages}"
-            xds=XDSparams(self.xdstemplate, name_template, data_range)
+            xds=XDSparams(name_template, data_range)
             if "runtime" in run:
                 "Check consistency between EXP-file and GUI"
                 rt_Dectris = self.frame_time*self.nimages
@@ -233,7 +233,7 @@ class EigerGUI(QtWidgets.QMainWindow):
                     raise ValueError("Inconsistency between EXP and GUI frame time")
             dir = np.sign(run['end'] - run['start'])
             xds.settings(self.image_width, self.experiment.wavelength, run['theta'], run['angle'], run['omega'], run['chi'], dir, run['start'])
-            xds.update()
+            xds.update(self.xdstemplate)
             xds.xdswrite(rundir)
 
         print("Set up XDS files is work in progress")
