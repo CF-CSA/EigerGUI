@@ -7,6 +7,7 @@ Created on Fri Jan 13 22:46:21 2023
 """
 import os.path
 from os.path import exists
+import numpy as np
 
 from PyQt6 import QtWidgets, QtGui, QtCore
 
@@ -52,9 +53,7 @@ class EigerGUI(QtWidgets.QMainWindow):
         self.nimages = 0
         self.triggermode = "exts"
         self.ntriggers = 1
-        self.ntriggers_widget = QtWidgets.QSpinBox(
-            self, value=self.ntriggers, minimum=1
-        )
+        self.ntriggers_widget = QtWidgets.QSpinBox(self, value=self.ntriggers, minimum=1)
         #
 
         # buttons that need to be disabled or enabled
@@ -223,7 +222,7 @@ class EigerGUI(QtWidgets.QMainWindow):
     def setup_xds(self):
 
         for idx, run in enumerate(self.experiment.runs):
-            rundir = self.workdir+os.path.sep()+f"run{idx+1:02d}"
+            rundir = self.workdir+os.path.sep+f"run{idx+1:02d}"
             name_template = self.detector.get_name_pattern()
             data_range = f"{(idx-1)*self.nimages} {idx*self.nimages}"
             xds=XDSparams(self.xdstemplate, name_template, data_range)
@@ -233,7 +232,7 @@ class EigerGUI(QtWidgets.QMainWindow):
                 if abs(rt_Dectris - run["runtime"]) > 0.001:
                     raise ValueError("Inconsistency between EXP and GUI frame time")
             dir = np.sign(run['end'] - run['start'])
-            xds.settings(self.image_width, run['wavelength'], run['theta'], run['axis'], run['omega'], run['chi'], dir, run['start'])
+            xds.settings(self.image_width, self.experiment.wavelength, run['theta'], run['angle'], run['omega'], run['chi'], dir, run['start'])
             xds.update()
             xds.xdswrite(rundir)
 

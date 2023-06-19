@@ -10,7 +10,7 @@ subdirectories with XDS.INP
 
 class XDSparams:
     def __init__(self, xdstemplate, name_template, data_range):
-        self.xdstempl = xdstemplate
+        self.xdstemplate = xdstemplate
         self.param_list = [
             ("NAME_TEMPLATE_DATA_FRAMES=", f"{name_template}"),
             ("DATA_RANGE=", f"{data_range}"),
@@ -48,11 +48,11 @@ class XDSparams:
                 for p in self.param_list:
                     key = p[0]
                     val = p[1]
-                    keyw = self.replace(keyw, key, value)
+                    keyw = self.replace(keyw, key, val)
                     self.xdsinp.append(" " + keyw + " " + rem)
         leftovers = set(self.param_list) - set(self.done_params)
-        for l in leftovers:
-            self.xdsinp.append(f" {l[0]} {l[1]}")
+        for others in leftovers:
+            self.xdsinp.append(f" {others[0]} {others[1]}")
 
     """
     search for exclamation marks and split the line into keyw (and value) 
@@ -60,10 +60,10 @@ class XDSparams:
     """
 
     def uncomment(self, line):
-        "find exclamation mark and separate string at this point"
+        """find exclamation mark and separate string at this point"""
         if "!" in line:
             idx = line.index("!")
-            key = line[:idx]
+            keyw = line[:idx]
             rem = line[idx:]
         else:
             keyw = line
@@ -94,12 +94,12 @@ class XDSparams:
     def rotation_axis(self, axis, omega, chi, direction):
         direction = np.sign(direction)
         if axis == "omega":
-            rotaxis = direction * [0, -1, 0]
+            rotaxis = direction * np.array([0, -1, 0])
         elif axis == "phi":
             x = direction * np.cos(omega) * np.sign(chi)
             y = direction * np.cos(chi)
             z = direction * np.sin(omega) * np.sin(chi)
-            rotaxis = [x, y, z]
+            rotaxis = np.array([x, y, z])
         else:
             raise ValueError("Rotation axes other than omega or phi invalid")
         my = (
@@ -124,8 +124,8 @@ class XDSparams:
     writes content of self.xdsinp into outdir as XDS.INP"""
 
     def xdswrite(self, outdir):
-        fn = outdir + os.path.sep() + "XDS.INP"
+        fn = outdir + os.path.sep + "XDS.INP"
         with open(fn, "w") as f:
             f.write("! XDS.INP written by EigerGUI")
-            for l in self.xdsinp:
-                f.write(l)
+            for myline in self.xdsinp:
+                f.write(myline)
