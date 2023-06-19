@@ -224,7 +224,7 @@ class EigerGUI(QtWidgets.QMainWindow):
         for idx, run in enumerate(self.experiment.runs):
             rundir = self.workdir+os.path.sep+f"run{idx+1:02d}"
             name_template = self.detector.get_name_pattern()
-            data_range = f"{(idx-1)*self.nimages} {idx*self.nimages}"
+            data_range = f"{idx*self.nimages} {(idx+1)*self.nimages}"
             xds=XDSparams(name_template, data_range)
             if "runtime" in run:
                 "Check consistency between EXP-file and GUI"

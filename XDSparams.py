@@ -10,11 +10,10 @@ subdirectories with XDS.INP
 
 class XDSparams:
     def __init__(self, name_template, data_range):
-        self.param_list = [
-            ("NAME_TEMPLATE_DATA_FRAMES=", f"{name_template}"),
-            ("DATA_RANGE=", f"{data_range}"),
-        ]
-        self.done_params = []
+        self.param_list = {}
+        self.param_list["NAME_TEMPLATE_DATA_FRAMES="]  = f"{name_template}"
+        self.param_list["DATA_RANGE="] = f"{data_range}"
+        self.done_params = {}
 
     """
     Experimental settings based on oscilation width (float), wavelength (float), axis 
@@ -23,15 +22,11 @@ class XDSparams:
     """
 
     def settings(self, oscw, wavelength, theta, axis, omega, chi, rotdir, start):
-        my = ("OSCILLATION_RANGE=", f"{oscw:6.3f}")
-        self.param_list.append(my)
-        my = ("X-RAY_WAVELENGTH=", f"{wavelength:8.6f}")
-        self.param_list.append(my)
-        my = ("STARTING_ANGLE=", f"{180./np.pi*start:6.4f}")
-        self.param_list.append(my)
+        self.param_list["OSCILLATION_RANGE="] = f"{oscw:6.3f}"
+        self.param_list["X-RAY_WAVELENGTH="] = f"{wavelength:8.6f}"
+        self.param_list["STARTING_ANGLE="] = f"{180./np.pi*start:6.4f}"
         self.detector_x_axis(theta)
         self.rotation_axis(axis, omega, chi, rotdir)
-        self.update()
 
     """
     replace parameters in xdstemplate with given ones
@@ -43,12 +38,15 @@ class XDSparams:
         self.xdsinp = []  # empty XDS.INP
         with open(xdstemplate, "r") as f:
             for line in f:
-                [keyw, rem] = self.uncomment(line)
-                for p in self.param_list:
-                    key = p[0]
-                    val = p[1]
-                    keyw = self.replace(keyw, key, val)
+                [cmdline, rem] = self.uncomment(line)
+                for keyw in self.param_list:
+                    if keyw in cmdline:
+                    val = self.param_list[keyw]
+                    self.replace(cmdline, keyw, val)
                     self.xdsinp.append(" " + keyw + " " + rem)
+                    error_this_code is broken here
+                else:
+                    self.xdsinp.append(line)
         print(f"replaced parameters: {self.done_params}")
         leftovers = set(self.param_list) - set(self.done_params)
         for others in leftovers:
@@ -102,11 +100,7 @@ class XDSparams:
             rotaxis = np.array([x, y, z])
         else:
             raise ValueError("Rotation axes other than omega or phi invalid")
-        my = (
-            "ROTATION_AXIS=",
-            f" {rotaxis[0]:6.5f} {rotaxis[1]:6.5f} {rotaxis[2]:6.5f}",
-        )
-        self.param_list.append(my)
+        self.param_list["ROTATION_AXIS="] = f" {rotaxis[0]:6.5f} {rotaxis[1]:6.5f} {rotaxis[2]:6.5f}"
 
     """ 
     calculate and set the detector X-axis from theta
@@ -114,17 +108,14 @@ class XDSparams:
 
     def detector_x_axis(self, theta):
         detx = [np.cos(2 * theta), 0.0, np.sin(2 * theta)]
-        my = (
-            "DIRECTION_OF_DETECTOR_X-AXIS=",
-            f"{detx[0]:9.6f} {detx[1]} {detx[2]:9.6f}",
-        )
-        self.param_list.append(my)
+        self.param_list["DIRECTION_OF_DETECTOR_X-AXIS="] = f"{detx[0]:9.6f} {detx[1]} {detx[2]:9.6f}"
 
     """
     writes content of self.xdsinp into outdir as XDS.INP"""
 
     def xdswrite(self, outdir):
         fn = outdir + os.path.sep + "XDS.INP"
+        os.makedirs(outdir, exist_ok=True)
         with open(fn, "w") as f:
             f.write("! XDS.INP written by EigerGUI")
             for myline in self.xdsinp:
