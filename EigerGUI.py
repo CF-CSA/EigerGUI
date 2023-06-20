@@ -220,6 +220,13 @@ class EigerGUI(QtWidgets.QMainWindow):
 
     @QtCore.pyqtSlot()
     def setup_xds(self):
+        """ updates XDS paramters and creates run directories """
+        if self.detector.get_state("detector") not in [ "ready", "acquire"]:
+            print("Detector not armed and not acquiring")
+            msg = QtWidgets.QMessageBox()
+            msg.setText("To ensure consistent filenames, Detector must be armed first")
+            msg.exec()
+            return
 
         for idx, run in enumerate(self.experiment.runs):
             rundir = self.workdir+os.path.sep+f"run{idx+1:02d}"

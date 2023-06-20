@@ -11,9 +11,8 @@ subdirectories with XDS.INP
 class XDSparams:
     def __init__(self, name_template, data_range):
         self.param_list = {}
-        self.param_list["NAME_TEMPLATE_DATA_FRAMES="]  = f"{name_template}"
+        self.param_list["NAME_TEMPLATE_DATA_FRAMES="] = f"{name_template}"
         self.param_list["DATA_RANGE="] = f"{data_range}"
-        self.done_params = {}
 
     """
     Experimental settings based on oscilation width (float), wavelength (float), axis 
@@ -34,21 +33,25 @@ class XDSparams:
     and param_list needs to be populated with keywords and values
     """
 
-    def update(self,xdstemplate):
+    def update(self, xdstemplate):
         self.xdsinp = []  # empty XDS.INP
         with open(xdstemplate, "r") as f:
-            for keyw in self.param_list:
-                """ check each line in template for keyword"""
+            for line in f:
                 newcmd = None
-                for line in f:
-                    if keyw in line:
+                print(f"current XDS line: {line}")
+                for keyw in self.param_list:
+                    if newcmd == None and keyw in line:
+                        print(f"Key {keyw} found in line")
                         [cmdline, rem] = self.uncomment(line)
                         val = self.param_list[keyw]
                         newcmd = self.replace(cmdline, keyw, val)
-                        self.xdsinp.append((f"  {newcmd} {rem}"))
-                """ if newcmd still None, just append keyw and value """
+                        print (f"new command: {newcmd}")
+                        self.xdsinp.append((f"  {newcmd} {rem}\n"))
+                """ check each line in template for keyword"""
+                """ if newcmd still None, just append THIS LINE """
                 if newcmd == None:
-                    self.xdsinp.append(f" {keyw} {self.param_list[keyw]}")
+                    print("newcmd unchanged, just appending line")
+                    self.xdsinp.append(line)
 
     """
     search for exclamation marks and split the line into keyw (and value) 
@@ -76,7 +79,6 @@ class XDSparams:
         if keyw in line:
             line = " " + keyw + " " + str(val)
             # keep track of replaced parameters
-            self.done_params.append( (keyw, val) )
         else:
             line = line
         return line
