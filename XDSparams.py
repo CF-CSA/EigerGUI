@@ -37,20 +37,18 @@ class XDSparams:
     def update(self,xdstemplate):
         self.xdsinp = []  # empty XDS.INP
         with open(xdstemplate, "r") as f:
-            for line in f:
-                [cmdline, rem] = self.uncomment(line)
-                for keyw in self.param_list:
-                    if keyw in cmdline:
-                    val = self.param_list[keyw]
-                    self.replace(cmdline, keyw, val)
-                    self.xdsinp.append(" " + keyw + " " + rem)
-                    error_this_code is broken here
-                else:
-                    self.xdsinp.append(line)
-        print(f"replaced parameters: {self.done_params}")
-        leftovers = set(self.param_list) - set(self.done_params)
-        for others in leftovers:
-            self.xdsinp.append(f" {others[0]} {others[1]}")
+            for keyw in self.param_list:
+                """ check each line in template for keyword"""
+                newcmd = None
+                for line in f:
+                    if keyw in line:
+                        [cmdline, rem] = self.uncomment(line)
+                        val = self.param_list[keyw]
+                        newcmd = self.replace(cmdline, keyw, val)
+                        self.xdsinp.append((f"  {newcmd} {rem}"))
+                """ if newcmd still None, just append keyw and value """
+                if newcmd == None:
+                    self.xdsinp.append(f" {keyw} {self.param_list[keyw]}")
 
     """
     search for exclamation marks and split the line into keyw (and value) 
