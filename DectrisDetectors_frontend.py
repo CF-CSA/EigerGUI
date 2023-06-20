@@ -106,6 +106,7 @@ class DetectorFrontend:
         "arms detector and returns current filename pattern"
         res = self.detector.send_command("arm")
         self.armID = res["sequence id"]
+        return self.armID
 
     def stop(self):
         "Short cut to disarm the detector"

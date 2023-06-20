@@ -81,7 +81,7 @@ class EigerGUI(QtWidgets.QMainWindow):
 
         layout.addWidget(self.outputfiles())
         layout.addWidget(self.screening())
-        layout.addWidget(self.SetupDataCollection())
+        layout.addWidget(self.setupDataCollection())
         layout.addWidget(self.exp_geometry())
         # layout.addWidget(self.recSettings())
         layout.addWidget(self.control())
@@ -228,9 +228,15 @@ class EigerGUI(QtWidgets.QMainWindow):
             msg.exec()
             return
 
+        """ name pattern contains literal $id, and does not end in _master.h5 """
+        name_template = self.detector.get_name_pattern()
+        print(f"name template from detector reads {name_template}")
+        name_template = name_template.replace("$id", str(self.armID))
+        print(f"name template with ID reads {name_template}")
+        name_template = name_template + "_??????.h5"
+        print(f"name template with suffix reads {name_template}")
         for idx, run in enumerate(self.experiment.runs):
             rundir = self.workdir+os.path.sep+f"run{idx+1:02d}"
-            name_template = self.detector.get_name_pattern()
             data_range = f"{idx*self.nimages} {(idx+1)*self.nimages}"
             xds=XDSparams(name_template, data_range)
             if "runtime" in run:
@@ -243,8 +249,6 @@ class EigerGUI(QtWidgets.QMainWindow):
             xds.update(self.xdstemplate)
             xds.xdswrite(rundir)
 
-        print("Set up XDS files is work in progress")
-        pass
 
     """
     Geometry settings, need to be copied from APEX3Server
@@ -353,8 +357,8 @@ class EigerGUI(QtWidgets.QMainWindow):
         my.setLayout(layout)
         return my
 
-    def SetupDataCollection(self):
-        "Setup actual measurement, ideally through Bruker EXP file"
+    def setupDataCollection(self):
+        """Setup actual measurement, ideally through Bruker EXP file"""
         my = QtWidgets.QGroupBox("Setup data Collection")
 
         layout = QtWidgets.QGridLayout()
@@ -391,7 +395,7 @@ class EigerGUI(QtWidgets.QMainWindow):
         return my
 
     def control(self):
-        "control buttons at bottom of GUI"
+        """control buttons at bottom of GUI"""
         my = QtWidgets.QWidget()
         layout = QtWidgets.QHBoxLayout()
 
@@ -414,7 +418,7 @@ class EigerGUI(QtWidgets.QMainWindow):
 
     @QtCore.pyqtSlot()
     def arm(self):
-        "Prepares the recording of data"
+        """Prepares the recording of data"""
         s = self.update_state()
         if s == "ready":
             self.detector.stop()

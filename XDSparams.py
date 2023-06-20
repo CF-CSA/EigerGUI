@@ -10,12 +10,11 @@ subdirectories with XDS.INP
 
 class XDSparams:
     def __init__(self, name_template, data_range):
-        self.param_list = {}
-        self.param_list["NAME_TEMPLATE_DATA_FRAMES="] = f"{name_template}"
+        self.param_list = {"NAME_TEMPLATE_OF_DATA_FRAMES=": f"{name_template}"}
         self.param_list["DATA_RANGE="] = f"{data_range}"
 
     """
-    Experimental settings based on oscilation width (float), wavelength (float), axis 
+    Experimental settings based on oscillation width (float), wavelength (float), axis 
     (string), omega (radians)
     chi (float, radians), rotdir (+/-1), start (float, radians
     """
@@ -24,6 +23,10 @@ class XDSparams:
         self.param_list["OSCILLATION_RANGE="] = f"{oscw:6.3f}"
         self.param_list["X-RAY_WAVELENGTH="] = f"{wavelength:8.6f}"
         self.param_list["STARTING_ANGLE="] = f"{180./np.pi*start:6.4f}"
+        if wavelength > 1.5:
+            self.param_list["GAIN="] = "1.0"
+        elif wavelength < 0.8:
+            self.param_list["GAIN="] = "0.7"
         self.detector_x_axis(theta)
         self.rotation_axis(axis, omega, chi, rotdir)
 
@@ -38,19 +41,15 @@ class XDSparams:
         with open(xdstemplate, "r") as f:
             for line in f:
                 newcmd = None
-                print(f"current XDS line: {line}")
                 for keyw in self.param_list:
-                    if newcmd == None and keyw in line:
-                        print(f"Key {keyw} found in line")
+                    if newcmd is None and keyw in line:
                         [cmdline, rem] = self.uncomment(line)
                         val = self.param_list[keyw]
                         newcmd = self.replace(cmdline, keyw, val)
-                        print (f"new command: {newcmd}")
-                        self.xdsinp.append((f"  {newcmd} {rem}\n"))
+                        self.xdsinp.append(f"  {newcmd} {rem}\n")
                 """ check each line in template for keyword"""
                 """ if newcmd still None, just append THIS LINE """
-                if newcmd == None:
-                    print("newcmd unchanged, just appending line")
+                if newcmd is None:
                     self.xdsinp.append(line)
 
     """
@@ -58,7 +57,8 @@ class XDSparams:
     as well as remark. Copied from dectris2xds.py
     """
 
-    def uncomment(self, line):
+    @staticmethod
+    def uncomment(line):
         """find exclamation mark and separate string at this point"""
         if "!" in line:
             idx = line.index("!")
@@ -75,7 +75,8 @@ class XDSparams:
     Copied from dectris2xds.py
     """
 
-    def replace(self, line, keyw, val):
+    @staticmethod
+    def replace(line, keyw, val):
         if keyw in line:
             line = " " + keyw + " " + str(val)
             # keep track of replaced parameters

@@ -1,4 +1,4 @@
-import json
+import ast
 
 
 class ExpFile:
@@ -22,29 +22,20 @@ class ExpFile:
     """
 
     def readexp(self):
-        with open(self.filename, "r") as expfile:
-            "remove header comment"
-            jsondata = "".join(line for line in expfile if not line.startswith("#"))
-            "replace invalid json values"
-            jsondata = jsondata.replace(" ('replace',", "")
-            jsondata = jsondata.replace(")", "")
-            jsondata = jsondata.replace("'", '"')
-            jsondata = jsondata.replace("None", '"None"')
-            jsondata = jsondata.replace("True", "1")
-            jsondata = jsondata.replace("False", "0")
-            allexp = json.loads(jsondata)
-            self.exp = allexp["scanset"]
+        with open(self.filename, "r") as f:
+            expf = f.read()
+
+        data = ast.literal_eval(expf)
+        self.exp = data['scanset']
 
     """
     extract information from runs
     """
 
     def getinfo(self):
-        wl = json.loads(json.dumps(self.exp[0]))
-        " debugging: print wavelength"
-        self.wavelength = wl["wavelength"]
+        self.wavelength = self.exp[0]['wavelength']
         print(f"Lambda = {self.wavelength}")
-        self.json_runs = json.loads(json.dumps(self.exp[1:]))
+        self.allruns = self.exp[1:]
         """
         access information in self.json_runs with e.g.
         run = self.json_runs[0]['p']['chi']
@@ -54,7 +45,7 @@ class ExpFile:
         keys in p: phi, type (?),dx (Delta), chi,theta, omega
         """
         apexruns = []
-        for run in self.json_runs:
+        for run in self.allruns:
             if run["active"]:
                 "create a list of active runs"
                 apexruns.append(run)
@@ -64,14 +55,16 @@ class ExpFile:
         "convert run structure to something reasonable for easier processing"
         for run in apexruns:
             "start angle in parameters.end, end angles in end outside p"
-            params = json.loads(json.dumps(run["p"]))
+            if (not 'p' in run):
+                print(f"Error, no parameters in run {run}")
+            params = run['p']
             myrun = {}
             ft = run["frametime"]
-            if not ft == "None":
-                myrun["frametime"] = float(ft)
+            if ft is not None:
+                myrun["frametime"] = ft[1]
             fa = run["frameangle"]
-            if not fa == "None":
-                myrun["frameangle"] = float(fa)
+            if fa is not None:
+                myrun["frameangle"] = fa[1]
             myrun["angle"] = run["angle"]
             myrun["start"] = run["start"]
             myrun["end"] = run["end"]
