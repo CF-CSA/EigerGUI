@@ -35,7 +35,7 @@ class ExpFile:
     def getinfo(self):
         self.wavelength = self.exp[0]['wavelength']
         print(f"Lambda = {self.wavelength}")
-        self.allruns = self.exp[1:]
+        allruns = self.exp[1:]
         """
         access information in self.json_runs with e.g.
         run = self.json_runs[0]['p']['chi']
@@ -44,19 +44,22 @@ class ExpFile:
         keys: attenutation, sensitivity, frametime, readout,step, active, end, angle
         keys in p: phi, type (?),dx (Delta), chi,theta, omega
         """
-        apexruns = []
-        for run in self.allruns:
-            if run["active"]:
+        active_runs = []
+        for run in allruns:
+            if run["active"] and 'p' in run:
                 "create a list of active runs"
-                apexruns.append(run)
+                active_runs.append(run)
             else:
                 print(f"Inactive run: {run}")
-        print(f"Number of apexruns: {len(apexruns)}")
-        "convert run structure to something reasonable for easier processing"
-        for run in apexruns:
-            "start angle in parameters.end, end angles in end outside p"
-            if (not 'p' in run):
+        print(f"Number of active runs: {len(active_runs)}")
+        """convert run structure to something reasonable for easier processing"""
+        for run in active_runs:
+            """start angle in parameters.end, end angles in end outside p"""
+            if ('p' not in run):
+                """ This is not a run, but some other description """
                 print(f"Error, no parameters in run {run}")
+            else:
+                print(f"{run['p']}")
             params = run['p']
             myrun = {}
             ft = run["frametime"]
