@@ -77,7 +77,7 @@ class ExpFile:
             myrun["theta"] = params["theta"]
             myrun["omega"] = params["omega"]
             if "frametime" in myrun and "frameangle" in myrun:
-                myrun['runtime'] = myrun["frametime"] * (np.abs(myrun["end"] - myrun["start"]))/myrun["frameangle"]
+                myrun['runtime'] = myrun["frametime"] * (abs(myrun["end"] - myrun["start"]))/myrun["frameangle"]
                 print(f"frametime = {myrun['frametime']}s")
             else:
                 print("Cannot calculate runtime,  take from GUI")

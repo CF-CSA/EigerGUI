@@ -241,7 +241,8 @@ class EigerGUI(QtWidgets.QMainWindow):
             data_range = f"{idx*self.nimages} {(idx+1)*self.nimages}"
             xds=XDSparams(name_template, data_range)
             sweep = run['end'] - run['start']
-            self.new_scan_range(sweep)
+            self.new_scan_range(np.abs(sweep)*180. / np.pi)
+            print(f"Updateing Scan range to {np.abs(sweep)*180. / np.pi}")
             if "runtime" in run:
                 "Check consistency between EXP-file and GUI"
                 rt_Dectris = self.frame_time*self.nimages
