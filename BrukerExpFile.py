@@ -77,12 +77,13 @@ class ExpFile:
             myrun["theta"] = params["theta"]
             myrun["omega"] = params["omega"]
             if "frametime" in myrun and "frameangle" in myrun:
-                myrun['runtime'] = myrun["frametime"] * (myrun["end"] - myrun["start"])/myrun["frameangle"]
+                myrun['runtime'] = myrun["frametime"] * (np.abs(myrun["end"] - myrun["start"]))/myrun["frameangle"]
                 print(f"frametime = {myrun['frametime']}s")
             else:
-                print("Cannot calculate runtime take from GUI")
+                print("Cannot calculate runtime,  take from GUI")
             self.runs.append(myrun)
         print(f"Number of active runs: {len(self.runs)}")
+
 
         # a run as a subkeyword ['active'] which is 1 or 0
         # looping: for j in (self.json_runs):

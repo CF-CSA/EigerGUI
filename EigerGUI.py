@@ -234,17 +234,20 @@ class EigerGUI(QtWidgets.QMainWindow):
         name_template = name_template.replace("$id", str(self.armID))
         print(f"name template with ID reads {name_template}")
         name_template = name_template + "_??????.h5"
+
         print(f"name template with suffix reads {name_template}")
         for idx, run in enumerate(self.experiment.runs):
             rundir = self.workdir+os.path.sep+f"run{idx+1:02d}"
             data_range = f"{idx*self.nimages} {(idx+1)*self.nimages}"
             xds=XDSparams(name_template, data_range)
+            sweep = run['end'] - run['start']
+            self.new_scan_range(sweep)
             if "runtime" in run:
                 "Check consistency between EXP-file and GUI"
                 rt_Dectris = self.frame_time*self.nimages
                 if abs(rt_Dectris - run["runtime"]) > 0.001:
                     raise ValueError("Inconsistency between EXP and GUI frame time")
-            dir = np.sign(run['end'] - run['start'])
+            dir = np.sign(sweep)
             xds.settings(self.image_width, self.experiment.wavelength, run['theta'], run['angle'], run['omega'], run['chi'], dir, run['start'])
             xds.update(self.xdstemplate)
             xds.xdswrite(rundir)
