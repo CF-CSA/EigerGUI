@@ -214,7 +214,7 @@ class EigerGUI(QtWidgets.QMainWindow):
      create XDS.INP
       - update template (based on wavelength?)
       - set geometry
-      - set up data_range (DATA_RANGE = (id-1)*nimages id*nimages
+      - set up data_range (DATA_RANGE = (id-1)*nimages+1 id*nimages
       - write XDS.INP
     """
 
@@ -238,13 +238,16 @@ class EigerGUI(QtWidgets.QMainWindow):
         print(f"name template with suffix reads {name_template}")
         for idx, run in enumerate(self.experiment.runs):
             rundir = self.workdir+os.path.sep+f"run{idx+1:02d}"
-            data_range = f"{idx*self.nimages} {(idx+1)*self.nimages}"
+            data_range = f"{1+idx*self.nimages} {(idx+1)*self.nimages}"
             xds=XDSparams(name_template, data_range)
             sweep = run['end'] - run['start']
             self.new_scan_range(np.abs(sweep)*180. / np.pi)
             print(f"Updateing Scan range to {np.abs(sweep)*180. / np.pi}")
             if "runtime" in run:
                 "Check consistency between EXP-file and GUI"
+                """ runtime means frametime and frameangle are present. Together
+		with sweep, exposure time can be calculated from image width self.image_width
+		"""
                 rt_Dectris = self.frame_time*self.nimages
                 if abs(rt_Dectris - run["runtime"]) > 0.001:
                     raise ValueError("Inconsistency between EXP and GUI frame time")
