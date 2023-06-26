@@ -82,8 +82,8 @@ class EigerGUI(QtWidgets.QMainWindow):
         layout.addWidget(self.outputfiles())
         layout.addWidget(self.screening())
         layout.addWidget(self.setupDataCollection())
-        layout.addWidget(self.exp_geometry())
-        # layout.addWidget(self.recSettings())
+        #exp_geometry is for manual triggering, not used anymore
+        # layout.addWidget(self.exp_geometry())
         layout.addWidget(self.control())
 
         main = QtWidgets.QWidget()
@@ -242,11 +242,13 @@ class EigerGUI(QtWidgets.QMainWindow):
             xds=XDSparams(name_template, data_range)
             sweep = run['end'] - run['start']
             self.new_scan_range(np.abs(sweep)*180. / np.pi)
+            # nimages = np.abs(sweep)*180. / np.pi / self.de
             print(f"Updateing Scan range to {np.abs(sweep)*180. / np.pi}")
             if "runtime" in run:
                 "Check consistency between EXP-file and GUI"
                 rt_Dectris = self.frame_time*self.nimages
                 if abs(rt_Dectris - run["runtime"]) > 0.001:
+                    print(f"TODO: update GUI instead of breaking the program")
                     raise ValueError("Inconsistency between EXP and GUI frame time")
             dir = np.sign(sweep)
             xds.settings(self.image_width, self.experiment.wavelength, run['theta'], run['angle'], run['omega'], run['chi'], dir, run['start'])
@@ -438,7 +440,8 @@ class EigerGUI(QtWidgets.QMainWindow):
         self.update_state()
         self.updateId()
         # probably a try block reasonable in case user forgot to provide some information
-        self.setup_xds()
+        if self.expfile is not None and os.path.exists(self.expfile):
+            self.setup_xds()
 
     @QtCore.pyqtSlot()
     def record(self):
