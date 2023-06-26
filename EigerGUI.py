@@ -20,9 +20,13 @@ from BrukerExpFile import ExpFile
 from XDSparams import XDSparams
 
 
-class EigerGUI(QtWidgets.QMainWindow):
-    "A simple GUI to run the Dectris SINGLA"
+"""
+A GUI to run the Dectris EIGER2 (API version 1.7.0) in connection with a
+Bruker D8 (APEX3)
+"""
 
+
+class EigerGUI(QtWidgets.QMainWindow):
     def __init__(self, ip="131.130.27.207"):
         super(EigerGUI, self).__init__()
 
@@ -53,7 +57,9 @@ class EigerGUI(QtWidgets.QMainWindow):
         self.nimages = 0
         self.triggermode = "exts"
         self.ntriggers = 1
-        self.ntriggers_widget = QtWidgets.QSpinBox(self, value=self.ntriggers, minimum=1)
+        self.ntriggers_widget = QtWidgets.QSpinBox(
+            self, value=self.ntriggers, minimum=1
+        )
         #
 
         # buttons that need to be disabled or enabled
@@ -82,7 +88,7 @@ class EigerGUI(QtWidgets.QMainWindow):
         layout.addWidget(self.outputfiles())
         layout.addWidget(self.screening())
         layout.addWidget(self.setupDataCollection())
-        #exp_geometry is for manual triggering, not used anymore
+        # exp_geometry is for manual triggering, not used anymore
         # layout.addWidget(self.exp_geometry())
         layout.addWidget(self.control())
 
@@ -220,8 +226,8 @@ class EigerGUI(QtWidgets.QMainWindow):
 
     @QtCore.pyqtSlot()
     def setup_xds(self):
-        """ updates XDS paramters and creates run directories """
-        if self.detector.get_state("detector") not in [ "ready", "acquire"]:
+        """updates XDS paramters and creates run directories"""
+        if self.detector.get_state("detector") not in ["ready", "acquire"]:
             print("Detector not armed and not acquiring")
             msg = QtWidgets.QMessageBox()
             msg.setText("To ensure consistent filenames, Detector must be armed first")
@@ -237,11 +243,11 @@ class EigerGUI(QtWidgets.QMainWindow):
 
         print(f"name template with suffix reads {name_template}")
         for idx, run in enumerate(self.experiment.runs):
-            rundir = self.workdir+os.path.sep+f"run{idx+1:02d}"
+            rundir = self.workdir + os.path.sep + f"run{idx+1:02d}"
             data_range = f"{1+idx*self.nimages} {(idx+1)*self.nimages}"
-            xds=XDSparams(name_template, data_range)
-            sweep = run['end'] - run['start']
-            self.new_scan_range(np.abs(sweep)*180. / np.pi)
+            xds = XDSparams(name_template, data_range)
+            sweep = run["end"] - run["start"]
+            self.new_scan_range(np.abs(sweep) * 180.0 / np.pi)
             # nimages = np.abs(sweep)*180. / np.pi / self.de
             print(f"Updateing Scan range to {np.abs(sweep)*180. / np.pi}")
             if "runtime" in run:
@@ -249,15 +255,23 @@ class EigerGUI(QtWidgets.QMainWindow):
                 """ runtime means frametime and frameangle are present. Together
 		with sweep, exposure time can be calculated from image width self.image_width
 		"""
-                rt_Dectris = self.frame_time*self.nimages
+                rt_Dectris = self.frame_time * self.nimages
                 if abs(rt_Dectris - run["runtime"]) > 0.001:
                     print(f"TODO: update GUI instead of breaking the program")
                     raise ValueError("Inconsistency between EXP and GUI frame time")
             dir = np.sign(sweep)
-            xds.settings(self.image_width, self.experiment.wavelength, run['theta'], run['angle'], run['omega'], run['chi'], dir, run['start'])
+            xds.settings(
+                self.image_width,
+                self.experiment.wavelength,
+                run["theta"],
+                run["angle"],
+                run["omega"],
+                run["chi"],
+                dir,
+                run["start"],
+            )
             xds.update(self.xdstemplate)
             xds.xdswrite(rundir)
-
 
     """
     Geometry settings, need to be copied from APEX3Server

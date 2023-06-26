@@ -26,14 +26,14 @@ class ExpFile:
             expf = f.read()
 
         data = ast.literal_eval(expf)
-        self.exp = data['scanset']
+        self.exp = data["scanset"]
 
     """
     extract information from runs
     """
 
     def getinfo(self):
-        self.wavelength = self.exp[0]['wavelength']
+        self.wavelength = self.exp[0]["wavelength"]
         print(f"Lambda = {self.wavelength}")
         allruns = self.exp[1:]
         """
@@ -46,7 +46,7 @@ class ExpFile:
         """
         active_runs = []
         for run in allruns:
-            if run["active"] and 'p' in run:
+            if run["active"] and "p" in run:
                 "create a list of active runs"
                 active_runs.append(run)
             else:
@@ -55,12 +55,12 @@ class ExpFile:
         """convert run structure to something reasonable for easier processing"""
         for run in active_runs:
             """start angle in parameters.end, end angles in end outside p"""
-            if ('p' not in run):
-                """ This is not a run, but some other description """
+            if "p" not in run:
+                """This is not a run, but some other description"""
                 print(f"Error, no parameters in run {run}")
             else:
                 print(f"{run['p']}")
-            params = run['p']
+            params = run["p"]
             myrun = {}
             ft = run["frametime"]
             if ft is not None:
@@ -77,13 +77,16 @@ class ExpFile:
             myrun["theta"] = params["theta"]
             myrun["omega"] = params["omega"]
             if "frametime" in myrun and "frameangle" in myrun:
-                myrun['runtime'] = myrun["frametime"] * (abs(myrun["end"] - myrun["start"]))/myrun["frameangle"]
+                myrun["runtime"] = (
+                    myrun["frametime"]
+                    * (abs(myrun["end"] - myrun["start"]))
+                    / myrun["frameangle"]
+                )
                 print(f"frametime = {myrun['frametime']}s")
             else:
                 print("Cannot calculate runtime,  take from GUI")
             self.runs.append(myrun)
         print(f"Number of active runs: {len(self.runs)}")
-
 
         # a run as a subkeyword ['active'] which is 1 or 0
         # looping: for j in (self.json_runs):

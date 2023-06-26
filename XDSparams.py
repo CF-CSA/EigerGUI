@@ -101,7 +101,9 @@ class XDSparams:
             rotaxis = np.array([x, y, z])
         else:
             raise ValueError("Rotation axes other than omega or phi invalid")
-        self.param_list["ROTATION_AXIS="] = f" {rotaxis[0]:6.5f} {rotaxis[1]:6.5f} {rotaxis[2]:6.5f}"
+        self.param_list[
+            "ROTATION_AXIS="
+        ] = f" {rotaxis[0]:6.5f} {rotaxis[1]:6.5f} {rotaxis[2]:6.5f}"
 
     """ 
     calculate and set the detector X-axis from theta
@@ -109,7 +111,9 @@ class XDSparams:
 
     def detector_x_axis(self, theta):
         detx = [np.cos(2 * theta), 0.0, np.sin(2 * theta)]
-        self.param_list["DIRECTION_OF_DETECTOR_X-AXIS="] = f"{detx[0]:9.6f} {detx[1]} {detx[2]:9.6f}"
+        self.param_list[
+            "DIRECTION_OF_DETECTOR_X-AXIS="
+        ] = f"{detx[0]:9.6f} {detx[1]} {detx[2]:9.6f}"
 
     """
     writes content of self.xdsinp into outdir as XDS.INP"""
