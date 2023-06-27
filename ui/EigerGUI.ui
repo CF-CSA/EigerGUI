@@ -6,35 +6,92 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>600</height>
+    <width>835</width>
+    <height>869</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QWidget" name="horizontalLayoutWidget">
+   <widget class="QWidget" name="">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>20</y>
-      <width>771</width>
-      <height>191</height>
+      <x>30</x>
+      <y>70</y>
+      <width>319</width>
+      <height>25</height>
      </rect>
     </property>
-    <layout class="QHBoxLayout" name="DetectorInfo"/>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="QLabel" name="triggermode">
+       <property name="text">
+        <string>Trigger Mode</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QRadioButton" name="selINTS">
+       <property name="text">
+        <string>INTS (manual)</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QRadioButton" name="selEXTS">
+       <property name="text">
+        <string>EXTS (trigger run)</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </widget>
-   <widget class="QWidget" name="horizontalLayoutWidget_2">
+   <widget class="QWidget" name="">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>230</y>
-      <width>771</width>
-      <height>221</height>
+      <x>31</x>
+      <y>21</y>
+      <width>296</width>
+      <height>27</height>
      </rect>
     </property>
-    <layout class="QHBoxLayout" name="Outputdata"/>
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <item>
+      <widget class="QLabel" name="detector">
+       <property name="text">
+        <string>Detector IP</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="IP_detector">
+       <property name="text">
+        <string>eigerx8.aoc.univie.ac.at</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="lblDetState">
+       <property name="text">
+        <string>State:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="statedetector">
+       <property name="currentText">
+        <string/>
+       </property>
+       <property name="maxVisibleItems">
+        <number>4</number>
+       </property>
+       <property name="maxCount">
+        <number>4</number>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -42,7 +99,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>800</width>
+     <width>835</width>
      <height>22</height>
     </rect>
    </property>
