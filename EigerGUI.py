@@ -212,6 +212,13 @@ class EigerGUI(QtWidgets.QMainWindow):
         self.ntriggers = len(self.experiment.runs)
         self.ntriggers_widget.setValue(self.ntriggers)
         self.new_tmode("exts")
+        for idx, run in enumerate(self.experiment.runs):
+            sweep = run["end"] - run["start"]
+            self.new_scan_range(np.abs(sweep) * 180.0 / np.pi)
+            self.nimages = 180. / np.pi * np.abs(sweep) / self.image_width
+            self.nimages = round(self.nimages)
+            print(f"Updateing Scan range to {np.abs(sweep)*180. / np.pi} and nimages to {self.nimages}")
+
 
     """
     Steps for setting up XDS
@@ -246,19 +253,8 @@ class EigerGUI(QtWidgets.QMainWindow):
             rundir = self.workdir + os.path.sep + f"run{idx+1:02d}"
             data_range = f"{1+idx*self.nimages} {(idx+1)*self.nimages}"
             xds = XDSparams(name_template, data_range)
+            rt_Dectris = self.frame_time * self.nimages
             sweep = run["end"] - run["start"]
-            self.new_scan_range(np.abs(sweep) * 180.0 / np.pi)
-            # nimages = np.abs(sweep)*180. / np.pi / self.de
-            print(f"Updateing Scan range to {np.abs(sweep)*180. / np.pi}")
-            if "runtime" in run:
-                "Check consistency between EXP-file and GUI"
-                """ runtime means frametime and frameangle are present. Together
-		with sweep, exposure time can be calculated from image width self.image_width
-		"""
-                rt_Dectris = self.frame_time * self.nimages
-                if abs(rt_Dectris - run["runtime"]) > 0.001:
-                    print(f"TODO: update GUI instead of breaking the program")
-                    raise ValueError("Inconsistency between EXP and GUI frame time")
             dir = np.sign(sweep)
             xds.settings(
                 self.image_width,
@@ -377,6 +373,10 @@ class EigerGUI(QtWidgets.QMainWindow):
         self.lbl_nimages = QtWidgets.QLabel(text=f"{self.nimages}")
         layout.addWidget(self.lbl_nimages, 3, 3)
 
+        qb = QtWidgets.QPushButton("Arm (Screen)")
+        qb.clicked.connect(self.arm_screen)
+        layout.addWidget(qb, 4,0)
+
         my.setLayout(layout)
         return my
 
@@ -422,7 +422,7 @@ class EigerGUI(QtWidgets.QMainWindow):
         my = QtWidgets.QWidget()
         layout = QtWidgets.QHBoxLayout()
 
-        self.btn_arm.clicked.connect(self.arm)
+        self.btn_arm.clicked.connect(self.arm_expfile)
         layout.addWidget(self.btn_arm)
 
         self.btn_record.clicked.connect(self.record)
@@ -438,9 +438,8 @@ class EigerGUI(QtWidgets.QMainWindow):
 
         my.setLayout(layout)
         return my
-
     @QtCore.pyqtSlot()
-    def arm(self):
+    def arm_screen(self):
         """Prepares the recording of data"""
         s = self.update_state()
         if s == "ready":
@@ -451,6 +450,23 @@ class EigerGUI(QtWidgets.QMainWindow):
         self.detector.set_frame_time(self.frame_time)
         self.detector.set_name_pattern(self.name_pattern)
         self.nimages = int(self.scan_range / self.image_width)
+        self.detector.set_nimages(self.nimages)
+        self.detector.detector.set_config("mode", "enabled", "filewriter")
+        self.detector.arm()
+        self.update_state()
+        self.updateId()
+
+    @QtCore.pyqtSlot()
+    def arm_expfile(self):
+        """Prepares the recording of data"""
+        s = self.update_state()
+        if s == "ready":
+            self.detector.stop()
+        self.updatefilename()
+        self.updateId()
+        self.detector.triggermode(self.triggermode, self.ntriggers)
+        self.detector.set_frame_time(self.frame_time)
+        self.detector.set_name_pattern(self.name_pattern)
         self.detector.set_nimages(self.nimages)
         self.detector.detector.set_config("mode", "enabled", "filewriter")
         self.detector.arm()

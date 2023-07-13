@@ -82,7 +82,7 @@ class ExpFile:
                     * (abs(myrun["end"] - myrun["start"]))
                     / myrun["frameangle"]
                 )
-                print(f"frametime = {myrun['frametime']}s")
+                print(f"frametime = {myrun['frametime']}s, runtime = {myrun['runtime']}")
             else:
                 print("Cannot calculate runtime,  take from GUI")
             self.runs.append(myrun)
