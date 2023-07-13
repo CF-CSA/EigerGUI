@@ -1,5 +1,5 @@
 import ast
-
+import numpy as np
 
 class ExpFile:
     "Read and process experimental description file from Bruker"
@@ -62,12 +62,6 @@ class ExpFile:
                 print(f"{run['p']}")
             params = run["p"]
             myrun = {}
-            ft = run["frametime"]
-            if ft is not None:
-                myrun["frametime"] = ft[1]
-            fa = run["frameangle"]
-            if fa is not None:
-                myrun["frameangle"] = fa[1]
             myrun["angle"] = run["angle"]
             myrun["start"] = run["start"]
             myrun["end"] = run["end"]
@@ -76,6 +70,15 @@ class ExpFile:
             myrun["chi"] = params["chi"]
             myrun["theta"] = params["theta"]
             myrun["omega"] = params["omega"]
+            ft = run["frametime"]
+            if ft is not None:
+                myrun["frametime"] = ft[1]
+            fa = run["frameangle"]
+            if fa is not None:
+                myrun["frameangle"] = fa[1]
+                myrun["ntrigger"] = np.abs(myrun["end"]-myrun["start"])/myrun["frameangle"]
+                myrun["ntrigger"] = round(myrun["ntrigger"])
+
             if "frametime" in myrun and "frameangle" in myrun:
                 myrun["runtime"] = (
                     myrun["frametime"]
