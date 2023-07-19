@@ -39,6 +39,7 @@ class EigerGUI(QtWidgets.QMainWindow):
             os.sep, "home", "tg", "univie", "instruments", "D8", "EIGER2"
         )
         self.xdstemplate = "/xtal/Integration/XDS/CCSA-templates/XDS-D8-Eiger2R500.INP"
+        self.xdstemplate = "D:/frames/guest/XDS-D8-Eiger2R500.INP"
         self.expfile = ""
         self.sampleID = "YourSampleID_no_Spaces"
         self.xID = 0
@@ -52,15 +53,24 @@ class EigerGUI(QtWidgets.QMainWindow):
         self.Axis = "OMEGA"
         self.source = "Cu"
         # parameters with reasonable defaults
-        self.frame_time = 1.0  # seconds
-        self.s_per_degree = 1
-        self.nimages = 0
+        self.nimages = 1
         self.triggermode = "exts"
+        self.nruns = 1
         self.ntriggers = 1
-        self.ntriggers_widget = QtWidgets.QSpinBox(
-            self, value=self.ntriggers, minimum=1
+
+        self.nruns_widget = QtWidgets.QSpinBox(
+            self, value=self.nruns, minimum=1, maximum=1000
         )
-        #
+        self.ntriggers_widget = QtWidgets.QSpinBox(
+            self, value=self.ntriggers, minimum=1, maximum=1000
+        )
+
+        self.apex_frame_time = 1.0
+        self.s_per_degree = 1
+        self.scan_range = 5.0
+        self.image_width = 0.5
+        self.frame_time = self.apex_frame_time * self.image_width / self.scan_range
+        print (f"frame_time: {self.frame_time}")
 
         # buttons that need to be disabled or enabled
         self.btn_arm = QtWidgets.QPushButton("Arm", self)
@@ -71,10 +81,7 @@ class EigerGUI(QtWidgets.QMainWindow):
         self.show()
 
         self.detector = DetectorFrontend(ip)
-        self.frame_time = 1.0
-        self.scan_range = 5.0
-        self.image_width = 0.5
-        self.detector.setup(frame_time=self.frame_time, datadir=self.datadir)
+        self.detector.setup(frame_time=self.apex_frame_time, datadir=self.datadir)
 
         # generate the stem for output file and display filename
         self.updatefilename()
@@ -172,7 +179,7 @@ class EigerGUI(QtWidgets.QMainWindow):
         layout.addWidget(pb, 1, 2)
 
         layout.addWidget(QtWidgets.QLabel(text="Sample ID"), 2, 0)
-        le = QtWidgets.QLineEdit(maxLength=100)
+        le = QtWidgets.QLineEdit(maxLength=100, text=self.sampleID)
         le.setValidator(
             QtGui.QRegularExpressionValidator(
                 QtCore.QRegularExpression("[A-Za-z0-9-_:]{100}")
@@ -209,7 +216,11 @@ class EigerGUI(QtWidgets.QMainWindow):
         if not exists(self.expfile):
             pass
         self.experiment.extract()
-        self.ntriggers = len(self.experiment.runs)
+        self.nruns = len(self.experiment.runs)
+        self.nruns_widget.setValue(self.nruns)
+
+        # self.ntriggers = self.experiment.total_images
+        self.ntriggers = self.nruns
         self.ntriggers_widget.setValue(self.ntriggers)
         self.new_tmode("exts")
         for idx, run in enumerate(self.experiment.runs):
@@ -217,7 +228,7 @@ class EigerGUI(QtWidgets.QMainWindow):
             self.new_scan_range(np.abs(sweep) * 180.0 / np.pi)
             self.nimages = 180. / np.pi * np.abs(sweep) / self.image_width
             self.nimages = round(self.nimages)
-            print(f"Updateing Scan range to {np.abs(sweep)*180. / np.pi} and nimages to {self.nimages}")
+            print(f"Updating Scan range to {np.abs(sweep)*180. / np.pi:.2} and nimages to {self.nimages}")
 
 
     """
@@ -253,7 +264,7 @@ class EigerGUI(QtWidgets.QMainWindow):
             rundir = self.workdir + os.path.sep + f"run{idx+1:02d}"
             data_range = f"{1+idx*self.nimages} {(idx+1)*self.nimages}"
             xds = XDSparams(name_template, data_range)
-            rt_Dectris = self.frame_time * self.nimages
+            rt_Dectris = self.apex_frame_time * self.nimages
             sweep = run["end"] - run["start"]
             dir = np.sign(sweep)
             xds.settings(
@@ -276,7 +287,7 @@ class EigerGUI(QtWidgets.QMainWindow):
     def exp_geometry(self):
         "Setup measurement"
         my = QtWidgets.QGroupBox(
-            "Experimental Geometry (update manually from APEX Server"
+            "Experimental Geometry (update manually from APEX3 (Server))"
         )
 
         layout = QtWidgets.QGridLayout()
@@ -334,6 +345,8 @@ class EigerGUI(QtWidgets.QMainWindow):
 
     def screening(self):
         my = QtWidgets.QGroupBox("Screen Sample")
+        self.lbl_frame_time = QtWidgets.QLabel(text=f"{self.frame_time:.2f}")
+
         layout = QtWidgets.QGridLayout()
 
         layout.addWidget(QtWidgets.QLabel(text="Scan Range: (APEX)"), 0, 0)
@@ -342,31 +355,41 @@ class EigerGUI(QtWidgets.QMainWindow):
         )
         sb.valueChanged.connect(self.new_scan_range)
         layout.addWidget(sb, 0, 1)
+        layout.addWidget(QtWidgets.QLabel(text=" =Image Width (APEX)"), 0, 2)
 
-        layout.addWidget(QtWidgets.QLabel(text="Image Width: (Actual)"), 1, 0)
+        layout.addWidget(QtWidgets.QLabel(text="Exposure time: (APEX)"), 1, 0)
+        sb = QtWidgets.QDoubleSpinBox(
+            self, value=self.apex_frame_time, minimum=0.025, maximum=360000
+        )
+        sb.valueChanged.connect(self.new_apex_frame_time)
+        layout.addWidget(sb, 1, 1)
+
+        qc = QtWidgets.QComboBox()
+        qc.addItems(["s/°", "s/image"])
+        qc.currentIndexChanged.connect(self.new_exposure_unit)
+        qc.setCurrentIndex(self.s_per_degree)
+        layout.addWidget(qc, 1, 2)
+
+        layout.addWidget(QtWidgets.QLabel(text="Image Width: (Actual)"), 2, 0)
         sb = QtWidgets.QDoubleSpinBox(
             self, value=self.image_width, minimum=0.1, maximum=2
         )
         sb.valueChanged.connect(self.new_image_width)
-        layout.addWidget(sb, 1, 1)
+        layout.addWidget(sb, 2, 1)
 
+        """
         layout.addWidget(QtWidgets.QLabel(text="Exposure time: (Actual)"), 2, 0)
         sb = QtWidgets.QDoubleSpinBox(
             self, value=self.frame_time, minimum=0.025, maximum=360000
         )
         sb.valueChanged.connect(self.new_frame_time)
         layout.addWidget(sb, 2, 1)
+        """
 
-        qc = QtWidgets.QComboBox()
-        qc.addItems(["s/°", "s/image"])
-        qc.currentIndexChanged.connect(self.new_exposure_unit)
-        qc.setCurrentIndex(self.s_per_degree)
-        layout.addWidget(qc, 2, 2)
+        layout.addWidget(QtWidgets.QLabel(text="Exposure time: (Actual):"), 3, 0)
+        self.frame_time = self.image_width / self.scan_range * self.apex_frame_time
 
-        layout.addWidget(QtWidgets.QLabel(text="Exposure time: (APEX):"), 3, 0)
-        apex_time = self.scan_range / self.image_width * self.frame_time
-        self.lbl_apex_time = QtWidgets.QLabel(text=f"{apex_time:.2f}")
-        layout.addWidget(self.lbl_apex_time, 3, 1)
+        layout.addWidget(self.lbl_frame_time, 3, 1)
 
         layout.addWidget(QtWidgets.QLabel(text="nimages: (actual):"), 3, 2)
         self.nimages = int(self.scan_range / self.image_width)
@@ -400,11 +423,15 @@ class EigerGUI(QtWidgets.QMainWindow):
         pb.clicked.connect(self.new_xdstemplate)
         layout.addWidget(pb, 1, 2)
 
-        layout.addWidget(QtWidgets.QLabel(text="# runs (ntrigger):"), 2, 0)
+        layout.addWidget(QtWidgets.QLabel(text="# runs:"), 2, 0)
+        self.nruns_widget.valueChanged.connect(self.new_nruns)
+        layout.addWidget(self.nruns_widget, 2, 1)
+
+        layout.addWidget(QtWidgets.QLabel(text="# ntrigger:"), 2, 2)
         self.ntriggers_widget.valueChanged.connect(self.new_ntriggers)
         if self.triggermode == "exts":
             self.ntriggers_widget.setEnabled(1)
-        layout.addWidget(self.ntriggers_widget, 2, 1)
+        layout.addWidget(self.ntriggers_widget, 2, 3)
 
         pb = QtWidgets.QPushButton(text="Process EXP")
         pb.clicked.connect(self.process_exp)
@@ -446,7 +473,8 @@ class EigerGUI(QtWidgets.QMainWindow):
             self.detector.stop()
         self.updatefilename()
         self.updateId()
-        self.detector.triggermode(self.triggermode, self.ntriggers)
+        # screening always should only have one trigger
+        self.detector.triggermode(self.triggermode, 1)
         self.detector.set_frame_time(self.frame_time)
         self.detector.set_name_pattern(self.name_pattern)
         self.nimages = int(self.scan_range / self.image_width)
@@ -581,12 +609,13 @@ class EigerGUI(QtWidgets.QMainWindow):
         self.updatefilename()
 
     @QtCore.pyqtSlot("double")
-    def new_frame_time(self, value):
-        self.frame_time = value
-        nimages = int(self.scan_range / self.image_width)
-        apex_time = nimages * self.frame_time
-        self.lbl_nimages.setText(f"{nimages}")
-        self.lbl_apex_time.setText(f"{apex_time:.2f}")
+    def new_apex_frame_time(self, value):
+        self.apex_frame_time = value
+        if self.s_per_degree == 1:
+            self.frame_time = value * self.image_width
+        else:
+            self.frame_time = self.apex_frame_time * self.image_width / self.scan_range
+        self.lbl_frame_time.setText(f"{self.frame_time:.2f}")
 
     @QtCore.pyqtSlot("int")
     def new_exposure_unit(self, value):
@@ -594,22 +623,24 @@ class EigerGUI(QtWidgets.QMainWindow):
             self.s_per_degree = 1
         else:
             self.s_per_degree = 0
+        # update display
+        self.new_apex_frame_time(self.apex_frame_time)
 
     @QtCore.pyqtSlot("double")
     def new_scan_range(self, value):
         self.scan_range = value
         nimages = int(self.scan_range / self.image_width)
-        apex_time = nimages * self.frame_time
+        self.frame_time = self.image_width / self.scan_range * self.apex_frame_time
         self.lbl_nimages.setText(f"{nimages}")
-        self.lbl_apex_time.setText(f"{apex_time:.2f}")
+        self.lbl_frame_time.setText(f"{self.frame_time:.2f}")
 
     @QtCore.pyqtSlot("double")
     def new_image_width(self, value):
         self.image_width = value
         nimages = int(self.scan_range / self.image_width)
-        apex_time = nimages * self.frame_time
+        self.frame_time = self.apex_frame_time / nimages
         self.lbl_nimages.setText(f"{nimages}")
-        self.lbl_apex_time.setText(f"{apex_time:.2f}")
+        self.lbl_frame_time.setText(f"{self.frame_time:.2f}")
 
     @QtCore.pyqtSlot("double")
     def new_phidot(self, rate=2.0):
@@ -633,6 +664,10 @@ class EigerGUI(QtWidgets.QMainWindow):
     @QtCore.pyqtSlot("double")
     def new_twotheta(self, value):
         self.twoTheta = value
+
+    @QtCore.pyqtSlot("int")
+    def new_nruns(self, value):
+        self.nruns = value
 
     @QtCore.pyqtSlot("int")
     def new_ntriggers(self, value):

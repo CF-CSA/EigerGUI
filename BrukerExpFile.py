@@ -7,6 +7,7 @@ class ExpFile:
     def __init__(self, filename):
         self.filename = filename
         self.runs = []
+        self.total_images = 0
 
     """
     wrapper that calls all necessary functions to extract information from EXP-file
@@ -62,12 +63,6 @@ class ExpFile:
                 print(f"{run['p']}")
             params = run["p"]
             myrun = {}
-            ft = run["frametime"]
-            if ft is not None:
-                myrun["frametime"] = ft[1]
-            fa = run["frameangle"]
-            if fa is not None:
-                myrun["frameangle"] = fa[1]
             myrun["angle"] = run["angle"]
             myrun["start"] = run["start"]
             myrun["end"] = run["end"]
@@ -76,6 +71,17 @@ class ExpFile:
             myrun["chi"] = params["chi"]
             myrun["theta"] = params["theta"]
             myrun["omega"] = params["omega"]
+            ft = run["frametime"]
+            if ft is not None:
+                myrun["frametime"] = ft[1]
+            fa = run["frameangle"]
+            if fa is not None:
+                # frameangle: width per image recorded by APEX
+                myrun["frameangle"] = fa[1]
+                myrun["nimages"] = abs(myrun["end"] - myrun["start"]) / myrun["frameangle"]
+                myrun["nimages"] = round(myrun["nimages"])
+                self.total_images = self.total_images + myrun["nimages"]
+                print(f"rounded number of images: {myrun['nimages']}")
             if "frametime" in myrun and "frameangle" in myrun:
                 myrun["runtime"] = (
                     myrun["frametime"]
