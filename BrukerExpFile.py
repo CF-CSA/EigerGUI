@@ -1,5 +1,5 @@
 import ast
-
+import numpy as np
 
 class ExpFile:
     "Read and process experimental description file from Bruker"
