@@ -219,8 +219,8 @@ class EigerGUI(QtWidgets.QMainWindow):
         self.nruns = len(self.experiment.runs)
         self.nruns_widget.setValue(self.nruns)
 
-        # self.ntriggers = self.experiment.total_images
-        self.ntriggers = self.nruns
+        self.ntriggers = self.experiment.total_images
+        # self.ntriggers = self.nruns
         self.ntriggers_widget.setValue(self.ntriggers)
         self.new_tmode("exts")
         for idx, run in enumerate(self.experiment.runs):
