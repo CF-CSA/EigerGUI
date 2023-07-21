@@ -10,7 +10,8 @@ subdirectories with XDS.INP
 
 class XDSparams:
     def __init__(self, name_template, data_range):
-        self.param_list = {"NAME_TEMPLATE_OF_DATA_FRAMES=": f"{name_template}"}
+        self.dataprefix = "../../data/"
+        self.param_list = {"NAME_TEMPLATE_OF_DATA_FRAMES=": f"{self.dataprefix}{name_template}"}
         self.param_list["DATA_RANGE="] = f"{data_range}"
 
     """

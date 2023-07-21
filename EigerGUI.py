@@ -219,15 +219,27 @@ class EigerGUI(QtWidgets.QMainWindow):
         self.nruns = len(self.experiment.runs)
         self.nruns_widget.setValue(self.nruns)
 
-        self.ntriggers = self.experiment.total_images
-        # self.ntriggers = self.nruns
+        # should be automated: shutterless of shuttered mode?
+        # self.ntriggers = self.experiment.total_images
+        self.ntriggers = self.nruns
         self.ntriggers_widget.setValue(self.ntriggers)
         self.new_tmode("exts")
         for idx, run in enumerate(self.experiment.runs):
             sweep = run["end"] - run["start"]
             self.new_scan_range(np.abs(sweep) * 180.0 / np.pi)
             self.nimages = 180. / np.pi * np.abs(sweep) / self.image_width
+            # in case nruns is subdivided into ntriggers, less images between triggers
+            self.nimages = self.nruns / self.ntriggers * self.nimages
             self.nimages = round(self.nimages)
+            if "frametime" in run and "frameangle" in run:
+                # 1st: time per degree
+                self.frame_time = np.pi / 180. * run["frametime"] / run["frameangle"]
+                # 2nd: time per EIGER frame
+                self.frame_time = self.frame_time * self.image_width
+                print(f'Calculated frametime as {self.frame_time} with per frame and {self.image_width} deg/frame')
+                self.lbl_frame_time.setText(f"{self.frame_time:.2f}")
+            else:
+                print("Cannot determine frame time from EXP file. Use Screening time")
             print(f"Updating Scan range to {np.abs(sweep)*180. / np.pi:.2} and nimages to {self.nimages}")
 
 
@@ -492,6 +504,7 @@ class EigerGUI(QtWidgets.QMainWindow):
             self.detector.stop()
         self.updatefilename()
         self.updateId()
+        print(f"Setting up data collection with {self.ntriggers} triggers, {self.frame_time}s frame time, and {self.nimages} images per trigger")
         self.detector.triggermode(self.triggermode, self.ntriggers)
         self.detector.set_frame_time(self.frame_time)
         self.detector.set_name_pattern(self.name_pattern)
