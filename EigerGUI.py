@@ -57,6 +57,7 @@ class EigerGUI(QtWidgets.QMainWindow):
         self.triggermode = "exts"
         self.nruns = 1
         self.ntriggers = 1
+        self.shutter_buffer = 1
 
         self.nruns_widget = QtWidgets.QSpinBox(
             self, value=self.nruns, minimum=1, maximum=1000
@@ -66,6 +67,7 @@ class EigerGUI(QtWidgets.QMainWindow):
         )
 
         self.apex_frame_time = 1.0
+        self.napeximages = 1
         self.s_per_degree = 1
         self.scan_range = 5.0
         self.image_width = 0.5
@@ -215,31 +217,35 @@ class EigerGUI(QtWidgets.QMainWindow):
         "if exp-file exists, process it"
         if not exists(self.expfile):
             pass
+        self.experiment = ExpFile(self.expfile)
         self.experiment.extract()
         self.nruns = len(self.experiment.runs)
         self.nruns_widget.setValue(self.nruns)
 
         # should be automated: shutterless of shuttered mode?
-        # self.ntriggers = self.experiment.total_images
-        self.ntriggers = self.nruns
+        self.ntriggers = self.experiment.total_images
+        # self.ntriggers = self.nruns
         self.ntriggers_widget.setValue(self.ntriggers)
         self.new_tmode("exts")
         for idx, run in enumerate(self.experiment.runs):
             sweep = run["end"] - run["start"]
             self.new_scan_range(np.abs(sweep) * 180.0 / np.pi)
-            self.nimages = 180. / np.pi * np.abs(sweep) / self.image_width
             # in case nruns is subdivided into ntriggers, less images between triggers
-            self.nimages = self.nruns / self.ntriggers * self.nimages
-            self.nimages = round(self.nimages)
+            self.nimages = 180. / np.pi * np.abs(sweep) / self.image_width
+            self.nimages = round(self.nimages * self.nruns / self.ntriggers)
+            # round and add one image as buffer, because Photon-100 is too slow for EIGER
+            self.nimages = round(self.nimages) + self.shutter_buffer
             if "frametime" in run and "frameangle" in run:
                 # 1st: time per degree
                 self.frame_time = np.pi / 180. * run["frametime"] / run["frameangle"]
                 # 2nd: time per EIGER frame
                 self.frame_time = self.frame_time * self.image_width
+                self.napeximages = round(sweep / run["frameangle"])
                 print(f'Calculated frametime as {self.frame_time} with per frame and {self.image_width} deg/frame')
                 self.lbl_frame_time.setText(f"{self.frame_time:.2f}")
             else:
                 print("Cannot determine frame time from EXP file. Use Screening time")
+                print("This will most likely lead to a mismatch between XDS.INP and data range")
             print(f"Updating Scan range to {np.abs(sweep)*180. / np.pi:.2} and nimages to {self.nimages}")
 
 
@@ -274,7 +280,7 @@ class EigerGUI(QtWidgets.QMainWindow):
         print(f"name template with suffix reads {name_template}")
         for idx, run in enumerate(self.experiment.runs):
             rundir = self.workdir + os.path.sep + f"run{idx+1:02d}"
-            data_range = f"{1+idx*self.nimages} {(idx+1)*self.nimages}"
+            data_range = f"{1+idx*self.napeximages*self.nimages} {(idx+1) * self.napeximages * self.nimages}"
             xds = XDSparams(name_template, data_range)
             rt_Dectris = self.apex_frame_time * self.nimages
             sweep = run["end"] - run["start"]
@@ -290,6 +296,9 @@ class EigerGUI(QtWidgets.QMainWindow):
                 run["start"],
             )
             xds.update(self.xdstemplate)
+            for i in range(1, self.napeximages+1):
+                exclude_data = f'{i*(idx+1)*self.nimages} {i*(idx+1)*self.nimages}'
+                xds.exclude_data(exclude_data)
             xds.xdswrite(rundir)
 
     """
@@ -577,7 +586,6 @@ class EigerGUI(QtWidgets.QMainWindow):
         if xf[0]:
             self.expfile = xf[0]
             self.le_expfile.setText(self.expfile)
-            self.experiment = ExpFile(self.expfile)
 
     @QtCore.pyqtSlot()
     def new_workdir(self):

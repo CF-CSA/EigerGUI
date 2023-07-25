@@ -11,8 +11,8 @@ subdirectories with XDS.INP
 class XDSparams:
     def __init__(self, name_template, data_range):
         self.dataprefix = "../../data/"
-        self.param_list = {"NAME_TEMPLATE_OF_DATA_FRAMES=": f"{self.dataprefix}{name_template}"}
-        self.param_list["DATA_RANGE="] = f"{data_range}"
+        self.param_list = {"NAME_TEMPLATE_OF_DATA_FRAMES=": f"{self.dataprefix}{name_template}",
+                           "DATA_RANGE=": f"{data_range}"}
 
     """
     Experimental settings based on oscillation width (float), wavelength (float), axis 
@@ -52,6 +52,13 @@ class XDSparams:
                 """ if newcmd still None, just append THIS LINE """
                 if newcmd is None:
                     self.xdsinp.append(line)
+    """
+    Append lines excluding data ranges; can be called multiple times; 
+    must be called after 'update', since update resets self.xdsinp
+    """
+    def exclude_data(self, excl_range):
+        line = f' EXCLUDE_DATA_RANGE= {excl_range}\n'
+        self.xdsinp.append(line)
 
     """
     search for exclamation marks and split the line into keyw (and value) 
