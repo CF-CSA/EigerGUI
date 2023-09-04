@@ -103,6 +103,7 @@ class XDSparams:
         if axis == "omega":
             rotaxis = direction * np.array([0, -1, 0])
         elif axis == "phi":
+            print (f"converting omega = {omega} and chi = {chi} to rotation angle")
             x = direction * np.cos(omega) * np.sign(chi)
             y = direction * np.cos(chi)
             z = direction * np.sin(omega) * np.sin(chi)
