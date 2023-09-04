@@ -297,8 +297,8 @@ class EigerGUI(QtWidgets.QMainWindow):
             )
             xds.update(self.xdstemplate)
             for i in range(1, self.napeximages+1):
-                exclude_data = f'{i*(idx+1)*self.nimages} {i*(idx+1)*self.nimages}'
-                xds.exclude_data(exclude_data)
+                exclude_data = idx*self.napeximages*self.nimages + i*self.nimages
+                xds.exclude_data(f'{exclude_data} {exclude_data}')
             xds.xdswrite(rundir)
 
     """

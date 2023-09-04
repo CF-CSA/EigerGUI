@@ -29,6 +29,7 @@ class XDSparams:
         elif wavelength < 0.8:
             self.param_list["GAIN="] = "0.7"
         self.detector_x_axis(theta)
+        print (f" Calculating rotation axis from omega = {omega}, chi = {chi}, and rotdir = {rotdir}")
         self.rotation_axis(axis, omega, chi, rotdir)
 
     """
@@ -103,10 +104,11 @@ class XDSparams:
         if axis == "omega":
             rotaxis = direction * np.array([0, -1, 0])
         elif axis == "phi":
-            print (f"converting omega = {omega} and chi = {chi} to rotation angle")
-            x = direction * np.cos(omega) * np.sign(chi)
+            x = direction * np.cos(omega) * np.sin(chi)
             y = direction * np.cos(chi)
             z = direction * np.sin(omega) * np.sin(chi)
+            print (f"converting omega = {omega} and chi = {chi} to rotation angle")
+            print (f" R = {x}, {y}, {z}")
             rotaxis = np.array([x, y, z])
         else:
             raise ValueError("Rotation axes other than omega or phi invalid")
