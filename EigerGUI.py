@@ -40,6 +40,7 @@ class EigerGUI(QtWidgets.QMainWindow):
         )
         self.xdstemplate = "/xtal/Integration/XDS/CCSA-templates/XDS-D8-Eiger2R500.INP"
         self.xdstemplate = "D:/frames/guest/XDS-D8-Eiger2R500.INP"
+        self.xdsoffsets = "D:/frames/guest/XDS-D8-Eiger2R500_OFFSETS.INP"
         self.expfile = ""
         self.sampleID = "YourSampleID_no_Spaces"
         self.xID = 0
@@ -292,6 +293,7 @@ class EigerGUI(QtWidgets.QMainWindow):
                 run["angle"],
                 run["omega"],
                 run["chi"],
+                run["distance"],
                 dir,
                 run["start"],
             )
@@ -444,23 +446,30 @@ class EigerGUI(QtWidgets.QMainWindow):
         pb.clicked.connect(self.new_xdstemplate)
         layout.addWidget(pb, 1, 2)
 
-        layout.addWidget(QtWidgets.QLabel(text="# runs:"), 2, 0)
-        self.nruns_widget.valueChanged.connect(self.new_nruns)
-        layout.addWidget(self.nruns_widget, 2, 1)
+        layout.addWidget(QtWidgets.QLabel(text="XDS.INP OFFSETS:"), 2, 0)
+        self.le_xdsoffsets = QtWidgets.QLineEdit(text=self.xdsoffsets)
+        layout.addWidget(self.le_xdsoffsets, 2, 1)
+        pb = QtWidgets.QPushButton(text="Browse")
+        pb.clicked.connect(self.new_xdsoffsets)
+        layout.addWidget(pb, 2, 2)
 
-        layout.addWidget(QtWidgets.QLabel(text="# ntrigger:"), 2, 2)
+        layout.addWidget(QtWidgets.QLabel(text="# runs:"), 3, 0)
+        self.nruns_widget.valueChanged.connect(self.new_nruns)
+        layout.addWidget(self.nruns_widget, 3, 1)
+
+        layout.addWidget(QtWidgets.QLabel(text="# ntrigger:"), 3, 2)
         self.ntriggers_widget.valueChanged.connect(self.new_ntriggers)
         if self.triggermode == "exts":
             self.ntriggers_widget.setEnabled(1)
-        layout.addWidget(self.ntriggers_widget, 2, 3)
+        layout.addWidget(self.ntriggers_widget, 3, 3)
 
         pb = QtWidgets.QPushButton(text="Process EXP")
         pb.clicked.connect(self.process_exp)
-        layout.addWidget(pb, 3, 0)
+        layout.addWidget(pb, 4, 0)
 
         pb = QtWidgets.QPushButton(text="Setup XDS")
         pb.clicked.connect(self.setup_xds)
-        layout.addWidget(pb, 3, 1)
+        layout.addWidget(pb, 4, 1)
 
         my.setLayout(layout)
         return my
@@ -607,7 +616,7 @@ class EigerGUI(QtWidgets.QMainWindow):
 
     @QtCore.pyqtSlot()
     def new_xdstemplate(self):
-        "Browse for Bruker Apex EXP file to setup up runs"
+        "Browse for XDS.INP as template file"
         xf = QtWidgets.QFileDialog.getOpenFileName(
             caption="Choose XDS.INP Template",
             filter="*.INP",
@@ -617,8 +626,19 @@ class EigerGUI(QtWidgets.QMainWindow):
             self.xdstemplate = xf[0]
             self.le_xdstemplate.setText(self.xdstemplate)
 
-    QtCore.pyqtSlot(str)
+    @QtCore.pyqtSlot()
+    def new_xdsoffsets(self):
+        "Browse for OFFSETS file for XDS.INP"
+        xf = QtWidgets.QFileDialog.getOpenFileName(
+            caption="Choose XDS_OFFSETS.INP Template",
+            filter="*.INP",
+            directory="/xtal/Integration/XDS/CCSA-templates",
+        )
+        if xf[0]:
+            self.xdsoffsets = xf[0]
+            self.le_xdsoffsets.setText(self.xdsoffsets)
 
+    QtCore.pyqtSlot(str)
     def new_axis(self, value):
         self.Axis = value
 

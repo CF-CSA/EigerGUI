@@ -20,10 +20,11 @@ class XDSparams:
     chi (float, radians), rotdir (+/-1), start (float, radians
     """
 
-    def settings(self, oscw, wavelength, theta, axis, omega, chi, rotdir, start):
+    def settings(self, oscw, wavelength, theta, axis, omega, chi, distance, rotdir, start):
         self.param_list["OSCILLATION_RANGE="] = f"{oscw:6.3f}"
         self.param_list["X-RAY_WAVELENGTH="] = f"{wavelength:8.6f}"
         self.param_list["STARTING_ANGLE="] = f"{180./np.pi*start:6.4f}"
+        self.param_list["DETECTOR_DISTANCE="] = f"{distance:2f}"
         if wavelength > 1.5:
             self.param_list["GAIN="] = "1.0"
         elif wavelength < 0.8:
