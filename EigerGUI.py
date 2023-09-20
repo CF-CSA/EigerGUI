@@ -296,6 +296,7 @@ class EigerGUI(QtWidgets.QMainWindow):
                 run["distance"],
                 dir,
                 run["start"],
+                self.xdsoffsets
             )
             xds.update(self.xdstemplate)
             for i in range(1, self.napeximages+1):

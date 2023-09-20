@@ -13,6 +13,8 @@ class XDSparams:
         self.dataprefix = "../../data/"
         self.param_list = {"NAME_TEMPLATE_OF_DATA_FRAMES=": f"{self.dataprefix}{name_template}",
                            "DATA_RANGE=": f"{data_range}"}
+        # populate offsets. so far, only DETECTOR_DISTANCE
+        self.offsets = {"DETECTOR_DISTANCE=": 0.0}
 
     """
     Experimental settings based on oscillation width (float), wavelength (float), axis 
@@ -20,17 +22,20 @@ class XDSparams:
     chi (float, radians), rotdir (+/-1), start (float, radians
     """
 
-    def settings(self, oscw, wavelength, theta, axis, omega, chi, distance, rotdir, start):
+    def settings(self, oscw, wavelength, theta, axis, omega, chi, distance, rotdir, start, offsets_file):
+        self.get_offsets(offsets_file)
+
         self.param_list["OSCILLATION_RANGE="] = f"{oscw:6.3f}"
         self.param_list["X-RAY_WAVELENGTH="] = f"{wavelength:8.6f}"
         self.param_list["STARTING_ANGLE="] = f"{180./np.pi*start:6.4f}"
-        self.param_list["DETECTOR_DISTANCE="] = f"{distance:2f}"
+        distance += self.offsets['DETECTOR_DISTANCE=']
+        self.param_list["DETECTOR_DISTANCE="] = f"{distance:.3f}"
+
         if wavelength > 1.5:
             self.param_list["GAIN="] = "1.0"
         elif wavelength < 0.8:
             self.param_list["GAIN="] = "0.7"
         self.detector_x_axis(theta)
-        print (f" Calculating rotation axis from omega = {omega}, chi = {chi}, and rotdir = {rotdir}")
         self.rotation_axis(axis, omega, chi, rotdir)
 
     """
@@ -137,3 +142,35 @@ class XDSparams:
             f.write("! XDS.INP written by EigerGUI")
             for myline in self.xdsinp:
                 f.write(myline)
+
+    """
+    extracts offsets from input file; should be reasonably formatted
+    comments starting with '!' are allowed and discarded
+    for now, only works for single valued floats (detector distance)
+    """
+    def get_offsets(self, offsets_file):
+        with open(offsets_file, 'r') as f:
+            for line in f:
+                newcmd = None
+                [cmdline, rem] = self.uncomment(line)
+                if "=" in cmdline:
+                    [ keyw, val ] = self.xdskeyval(cmdline)
+                    self.offsets[keyw] = float(val)
+
+    """
+        expects a single line without comments, including a '='
+        splits the line into XDS keyword including '=' and the
+        subsequent value. Not type conversion, i.e., triplet numbers
+        e.g. for axes are maintained, as well as
+        duplicate entry lines (ORGX=256 ORGY=256)
+    """
+    def xdskeyval(self, line):
+        "separate keyword from value"
+        if "=" in line:
+            idx = line.index("=")
+            keyw = str.strip(line[:idx+1])
+            val  = str.strip(line[idx+1:])
+        else:
+            keyw = ""
+            val  = 0.0
+        return [ keyw, val ]
