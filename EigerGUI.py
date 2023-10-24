@@ -58,7 +58,7 @@ class EigerGUI(QtWidgets.QMainWindow):
         self.triggermode = "exts"
         self.nruns = 1
         self.ntriggers = 1
-        self.shutter_buffer = 1
+        self.nshutter_buffer = 1
 
         self.nruns_widget = QtWidgets.QSpinBox(
             self, value=self.nruns, minimum=1, maximum=1000
@@ -235,7 +235,7 @@ class EigerGUI(QtWidgets.QMainWindow):
             self.nimages = 180. / np.pi * np.abs(sweep) / self.image_width
             self.nimages = round(self.nimages * self.nruns / self.ntriggers)
             # round and add one image as buffer, because Photon-100 is too slow for EIGER
-            self.nimages = round(self.nimages) + self.shutter_buffer
+            self.nimages = round(self.nimages) + self.nshutter_buffer
             if "frametime" in run and "frameangle" in run:
                 # 1st: time per degree
                 self.frame_time = np.pi / 180. * run["frametime"] / run["frameangle"]
