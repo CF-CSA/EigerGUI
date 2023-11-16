@@ -58,7 +58,8 @@ class EigerGUI(QtWidgets.QMainWindow):
         self.triggermode = "exts"
         self.nruns = 1
         self.ntriggers = 1
-        self.nshutter_buffer = 1
+        # self.nshutter_buffer = 1
+        self.nshutter_buffer = 0
 
         self.nruns_widget = QtWidgets.QSpinBox(
             self, value=self.nruns, minimum=1, maximum=1000
@@ -224,8 +225,8 @@ class EigerGUI(QtWidgets.QMainWindow):
         self.nruns_widget.setValue(self.nruns)
 
         # should be automated: shutterless of shuttered mode?
-        self.ntriggers = self.experiment.total_images
-        # self.ntriggers = self.nruns
+        # self.ntriggers = self.experiment.total_images
+        self.ntriggers = self.nruns
         self.ntriggers_widget.setValue(self.ntriggers)
         self.new_tmode("exts")
         for idx, run in enumerate(self.experiment.runs):
