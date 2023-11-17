@@ -10,6 +10,7 @@ from os.path import exists
 import numpy as np
 
 from PyQt6 import QtWidgets, QtGui, QtCore
+from PyQt6.QtCore import QTimer
 
 import sys
 import time
@@ -38,6 +39,7 @@ class EigerGUI(QtWidgets.QMainWindow):
         self.workdir = os.path.join(
             os.sep, "home", "tg", "univie", "instruments", "D8", "EIGER2"
         )
+        self.timer = QTimer()
         self.xdstemplate = "/xtal/Integration/XDS/CCSA-templates/XDS-D8-Eiger2R500.INP"
         self.xdstemplate = "D:/frames/guest/XDS-D8-Eiger2R500.INP"
         self.xdsoffsets = "D:/frames/guest/XDS-D8-Eiger2R500_OFFSETS.INP"
@@ -87,6 +89,10 @@ class EigerGUI(QtWidgets.QMainWindow):
         self.detector = DetectorFrontend(ip)
         self.detector.setup(frame_time=self.apex_frame_time, datadir=self.datadir)
 
+        self.update_intervall = 1000 # millisecond
+        self.timer.timeout.connect(self.update_state)
+        self.timer.start(self.update_intervall)
+
         # generate the stem for output file and display filename
         self.updatefilename()
         self.setup()
@@ -99,8 +105,6 @@ class EigerGUI(QtWidgets.QMainWindow):
         layout.addWidget(self.outputfiles())
         layout.addWidget(self.screening())
         layout.addWidget(self.setupDataCollection())
-        # exp_geometry is for manual triggering, not used anymore
-        # layout.addWidget(self.exp_geometry())
         layout.addWidget(self.control())
 
         main = QtWidgets.QWidget()
@@ -130,6 +134,10 @@ class EigerGUI(QtWidgets.QMainWindow):
         layout.addWidget(btn)
 
         vlayout = QtWidgets.QVBoxLayout()
+        vlayout.addLayout(layout)
+
+        layout = QtWidgets.QHBoxLayout()
+        layout.addWidget(QtWidgets.QLabel(text=f"Update intervall for detector state: {0.001*self.update_intervall:.1f}s"))
         vlayout.addLayout(layout)
 
         layout = QtWidgets.QHBoxLayout()
@@ -305,69 +313,9 @@ class EigerGUI(QtWidgets.QMainWindow):
                 xds.exclude_data(f'{exclude_data} {exclude_data}')
             xds.xdswrite(rundir)
 
-    """
-    Geometry settings, need to be copied from APEX3Server
-    """
-
-    def exp_geometry(self):
-        "Setup measurement"
-        my = QtWidgets.QGroupBox(
-            "Experimental Geometry (update manually from APEX3 (Server))"
-        )
-
-        layout = QtWidgets.QGridLayout()
-
-        layout.addWidget(QtWidgets.QLabel(text="Distance:"), 0, 0)
-        db = QtWidgets.QDoubleSpinBox(self, value=self.D_mm, minimum=33.6, maximum=247)
-        db.setSuffix(" mm")
-        db.valueChanged.connect(self.new_distance)
-        layout.addWidget(db, 0, 1)
-
-        layout.addWidget(QtWidgets.QLabel(text="2Theta:"), 0, 2)
-        db = QtWidgets.QDoubleSpinBox(
-            self, value=self.twoTheta, minimum=-180, maximum=180
-        )
-        db.setSuffix("°")
-        db.valueChanged.connect(self.new_twotheta)
-        layout.addWidget(db, 0, 3)
-
-        layout.addWidget(QtWidgets.QLabel(text="Omega"), 0, 4)
-        db = QtWidgets.QDoubleSpinBox(self, value=self.Omega, minimum=-180, maximum=180)
-        db.setSuffix("°")
-        db.valueChanged.connect(self.new_omega)
-        layout.addWidget(db, 0, 5)
-
-        layout.addWidget(QtWidgets.QLabel(text="Phi"))
-        db = QtWidgets.QDoubleSpinBox(
-            self, value=self.Phi, minimum=-180.0, maximum=360.0
-        )
-        db.setSuffix("°")
-        db.valueChanged.connect(self.new_phi)
-        layout.addWidget(db)
-
-        layout.addWidget(QtWidgets.QLabel(text="Chi"))
-        db = QtWidgets.QDoubleSpinBox(self, value=self.Chi, minimum=-99.0, maximum=99.0)
-        db.setSuffix("°")
-        db.valueChanged.connect(self.new_chi)
-        layout.addWidget(db)
-
-        layout.addWidget(QtWidgets.QLabel(text="Rotation Axis:"), 2, 0)
-        rb = QtWidgets.QRadioButton(text="Omega")
-        rb.clicked.connect(lambda: self.new_axis("OMEGA"))
-        rb.setChecked(True)
-        layout.addWidget(rb, 2, 1)
-        rb = QtWidgets.QRadioButton(text="Phi")
-        rb.clicked.connect(lambda: self.new_axis("PHI"))
-        layout.addWidget(rb, 2, 2)
-        self.new_axis(self.Axis)
-
-        my.setLayout(layout)
-        return my
-
     """ 
     Settings for screening
     """
-
     def screening(self):
         my = QtWidgets.QGroupBox("Screen Sample")
         self.lbl_frame_time = QtWidgets.QLabel(text=f"{self.frame_time:.2f}")
