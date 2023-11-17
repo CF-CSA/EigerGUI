@@ -290,7 +290,8 @@ class EigerGUI(QtWidgets.QMainWindow):
         print(f"name template with suffix reads {name_template}")
         for idx, run in enumerate(self.experiment.runs):
             rundir = self.workdir + os.path.sep + f"run{idx+1:02d}"
-            data_range = f"{1+idx*self.napeximages*self.nimages} {(idx+1) * self.napeximages * self.nimages}"
+            # data_range = f"{1+idx*self.napeximages*self.nimages} {(idx+1) * self.napeximages * self.nimages}"
+            data_range = f"{1+idx*self.nimages} {(idx+1) * self.nimages}"
             xds = XDSparams(name_template, data_range)
             rt_Dectris = self.apex_frame_time * self.nimages
             sweep = run["end"] - run["start"]
@@ -308,9 +309,14 @@ class EigerGUI(QtWidgets.QMainWindow):
                 self.xdsoffsets
             )
             xds.update(self.xdstemplate)
+
+            """ 
+            In true shutterless mode, this should not be necessary.
+            Unsure, when the shutter is used
             for i in range(1, self.napeximages+1):
                 exclude_data = idx*self.napeximages*self.nimages + i*self.nimages
                 xds.exclude_data(f'{exclude_data} {exclude_data}')
+            """
             xds.xdswrite(rundir)
 
     """ 
