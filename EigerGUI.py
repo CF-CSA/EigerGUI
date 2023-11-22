@@ -423,10 +423,6 @@ class EigerGUI(QtWidgets.QMainWindow):
         pb.clicked.connect(self.process_exp)
         layout.addWidget(pb, 4, 0)
 
-        pb = QtWidgets.QPushButton(text="Setup XDS")
-        pb.clicked.connect(self.setup_xds)
-        layout.addWidget(pb, 4, 1)
-
         my.setLayout(layout)
         return my
 
@@ -477,7 +473,6 @@ class EigerGUI(QtWidgets.QMainWindow):
         if s == "ready":
             self.detector.stop()
         self.updatefilename()
-        self.updateId()
         print(f"Setting up data collection with {self.ntriggers} triggers, {self.frame_time}s frame time, and {self.nimages} images per trigger")
         self.detector.triggermode(self.triggermode, self.ntriggers)
         self.detector.set_frame_time(self.frame_time)
