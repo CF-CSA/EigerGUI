@@ -441,7 +441,10 @@ class EigerGUI(QtWidgets.QMainWindow):
         layout.addWidget(pb, 5, 0)
 
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 3a0fffb298262f8e0b810e4a0760aa35e0ee122e
         my.setLayout(layout)
         return my
 
@@ -492,7 +495,6 @@ class EigerGUI(QtWidgets.QMainWindow):
         if s == "ready":
             self.detector.stop()
         self.updatefilename()
-        self.updateId()
         print(f"Setting up data collection with {self.ntriggers} triggers, {self.frame_time}s frame time, and {self.nimages} images per trigger")
         self.detector.triggermode(self.triggermode, self.ntriggers)
         self.detector.set_frame_time(self.frame_time)
