@@ -420,31 +420,30 @@ class EigerGUI(QtWidgets.QMainWindow):
             self.ntriggers_widget.setEnabled(1)
         layout.addWidget(self.ntriggers_widget, 3, 3)
 
-        layout.addWidget(QtWidgets.QLabel(text="Output files:"), 4, 0)
+        lt = QtWidgets.QHBoxLayout()
+
+        lt.addWidget(QtWidgets.QLabel(text="Output files:"))
         rb = QtWidgets.QRadioButton("1 file / frame")
         rb.clicked.connect(lambda: self.new_nimages_per_file("filePerFrame"))
         rb.setChecked(False)
-        layout.addWidget(rb)
+        lt.addWidget(rb)
 
         rb = QtWidgets.QRadioButton("1 file / run")
         rb.clicked.connect(lambda: self.new_nimages_per_file("filePerRun"))
         rb.setChecked(False)
-        layout.addWidget(rb)
+        lt.addWidget(rb)
 
         rb = QtWidgets.QRadioButton("all in one")
         rb.clicked.connect(lambda: self.new_nimages_per_file("allInOne"))
         rb.setChecked(True)
-        layout.addWidget(rb)
+        lt.addWidget(rb)
+
+        layout.addLayout(lt, 4,0)
 
         pb = QtWidgets.QPushButton(text="Process EXP")
         pb.clicked.connect(self.process_exp)
         layout.addWidget(pb, 5, 0)
 
-
-<<<<<<< HEAD
-
-=======
->>>>>>> 3a0fffb298262f8e0b810e4a0760aa35e0ee122e
         my.setLayout(layout)
         return my
 
@@ -674,7 +673,7 @@ class EigerGUI(QtWidgets.QMainWindow):
         else:
             self.ntriggers_widget.setEnabled(0)
             self.btn_record.setEnabled(1)
-    @QtCore.pyqtSlot("str")
+    @QtCore.pyqtSlot()
     def new_nimages_per_file(selfself, value):
         print(f"Debug: dynamic setting of nimages per file note yet implemented {value}")
 
