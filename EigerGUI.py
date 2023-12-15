@@ -61,7 +61,7 @@ class EigerGUI(QtWidgets.QMainWindow):
         self.nruns = 1
         self.ntriggers = 1
         # self.nshutter_buffer = 1
-        self.nshutter_buffer = 0
+        self.nshutter_buffer = 2
 
         self.nruns_widget = QtWidgets.QSpinBox(
             self, value=self.nruns, minimum=1, maximum=1000
@@ -100,18 +100,18 @@ class EigerGUI(QtWidgets.QMainWindow):
     def setup(self):
         layout = QtWidgets.QVBoxLayout()
 
-        layout.addWidget(self.detector_info())
+        layout.addWidget(self.ui_DetectorInfo())
 
-        layout.addWidget(self.outputfiles())
-        layout.addWidget(self.screening())
-        layout.addWidget(self.setupDataCollection())
+        layout.addWidget(self.ui_OutputData)
+        layout.addWidget(self.ui_ScreenSample())
+        layout.addWidget(self.ui_SetupDataCollection())
         layout.addWidget(self.control())
 
         main = QtWidgets.QWidget()
         main.setLayout(layout)
         self.setCentralWidget(main)
 
-    def detector_info(self):
+    def ui_DetectorInfo(self):
         "Show IP address of detector, status, etc"
         my = QtWidgets.QGroupBox("Detector Info")
 
@@ -170,9 +170,10 @@ class EigerGUI(QtWidgets.QMainWindow):
         my.setLayout(vlayout)
         return my
 
-    def outputfiles(self):
+    @property
+    def ui_OutputData(self):
         "Setup directories for output data and working dir"
-        my = QtWidgets.QGroupBox("Output data")
+        my = QtWidgets.QGroupBox("Output Data")
 
         layout = QtWidgets.QGridLayout()
 
@@ -291,7 +292,7 @@ class EigerGUI(QtWidgets.QMainWindow):
         for idx, run in enumerate(self.experiment.runs):
             rundir = self.workdir + os.path.sep + f"run{idx+1:02d}"
             # data_range = f"{1+idx*self.napeximages*self.nimages} {(idx+1) * self.napeximages * self.nimages}"
-            data_range = f"{1+idx*self.nimages} {(idx+1) * self.nimages}"
+            data_range = f"{1+idx*self.nimages} {(idx+1) * self.nimages - self.nshutter_buffer}"
             xds = XDSparams(name_template, data_range)
             rt_Dectris = self.apex_frame_time * self.nimages
             sweep = run["end"] - run["start"]
@@ -322,7 +323,7 @@ class EigerGUI(QtWidgets.QMainWindow):
     """ 
     Settings for screening
     """
-    def screening(self):
+    def ui_ScreenSample(self):
         my = QtWidgets.QGroupBox("Screen Sample")
         self.lbl_frame_time = QtWidgets.QLabel(text=f"{self.frame_time:.2f}")
 
@@ -382,9 +383,9 @@ class EigerGUI(QtWidgets.QMainWindow):
         my.setLayout(layout)
         return my
 
-    def setupDataCollection(self):
+    def ui_SetupDataCollection(self):
         """Setup actual measurement, ideally through Bruker EXP file"""
-        my = QtWidgets.QGroupBox("Setup data Collection")
+        my = QtWidgets.QGroupBox("Setup Data Collection")
 
         layout = QtWidgets.QGridLayout()
 
@@ -419,13 +420,27 @@ class EigerGUI(QtWidgets.QMainWindow):
             self.ntriggers_widget.setEnabled(1)
         layout.addWidget(self.ntriggers_widget, 3, 3)
 
+        layout.addWidget(QtWidgets.QLabel(text="Output files:"), 4, 0)
+        rb = QtWidgets.QRadioButton("1 file / frame")
+        rb.clicked.connect(lambda: self.new_nimages_per_file("filePerFrame"))
+        rb.setChecked(False)
+        layout.addWidget(rb)
+
+        rb = QtWidgets.QRadioButton("1 file / run")
+        rb.clicked.connect(lambda: self.new_nimages_per_file("filePerRun"))
+        rb.setChecked(False)
+        layout.addWidget(rb)
+
+        rb = QtWidgets.QRadioButton("all in one")
+        rb.clicked.connect(lambda: self.new_nimages_per_file("allInOne"))
+        rb.setChecked(True)
+        layout.addWidget(rb)
+
         pb = QtWidgets.QPushButton(text="Process EXP")
         pb.clicked.connect(self.process_exp)
-        layout.addWidget(pb, 4, 0)
+        layout.addWidget(pb, 5, 0)
 
-        pb = QtWidgets.QPushButton(text="Setup XDS")
-        pb.clicked.connect(self.setup_xds)
-        layout.addWidget(pb, 4, 1)
+
 
         my.setLayout(layout)
         return my
@@ -657,6 +672,9 @@ class EigerGUI(QtWidgets.QMainWindow):
         else:
             self.ntriggers_widget.setEnabled(0)
             self.btn_record.setEnabled(1)
+    @QtCore.pyqtSlot("str")
+    def new_nimages_per_file(selfself, value):
+        print(f"Debug: dynamic setting of nimages per file note yet implemented {value}")
 
     @QtCore.pyqtSlot("double")
     def new_twotheta(self, value):
