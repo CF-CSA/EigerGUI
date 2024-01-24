@@ -62,6 +62,7 @@ class EigerGUI(QtWidgets.QMainWindow):
         self.ntriggers = 1
         # self.nshutter_buffer = 1
         self.nshutter_buffer = 2
+        self.storage_mode = "per_dataset" # 'per_dataset','per_run', 'per_frame'
 
         self.nruns_widget = QtWidgets.QSpinBox(
             self, value=self.nruns, minimum=1, maximum=1000
@@ -422,23 +423,23 @@ class EigerGUI(QtWidgets.QMainWindow):
 
         lt = QtWidgets.QHBoxLayout()
 
-        lt.addWidget(QtWidgets.QLabel(text="Output files:"))
+        layout.addWidget(QtWidgets.QLabel(text="Output files:"), 4, 0)
         rb = QtWidgets.QRadioButton("1 file / frame")
-        rb.clicked.connect(lambda: self.new_nimages_per_file("filePerFrame"))
+        rb.clicked.connect(lambda: self.new_nimages_per_file("per_frame"))
         rb.setChecked(False)
         lt.addWidget(rb)
 
         rb = QtWidgets.QRadioButton("1 file / run")
-        rb.clicked.connect(lambda: self.new_nimages_per_file("filePerRun"))
+        rb.clicked.connect(lambda: self.new_nimages_per_file("per_run"))
         rb.setChecked(False)
         lt.addWidget(rb)
 
         rb = QtWidgets.QRadioButton("all in one")
-        rb.clicked.connect(lambda: self.new_nimages_per_file("allInOne"))
+        rb.clicked.connect(lambda: self.new_nimages_per_file("per_dataset"))
         rb.setChecked(True)
         lt.addWidget(rb)
 
-        layout.addLayout(lt, 4,0)
+        layout.addLayout(lt, 4,1)
 
         pb = QtWidgets.QPushButton(text="Process EXP")
         pb.clicked.connect(self.process_exp)
@@ -500,6 +501,12 @@ class EigerGUI(QtWidgets.QMainWindow):
         self.detector.set_name_pattern(self.name_pattern)
         self.detector.set_nimages(self.nimages)
         self.detector.detector.set_config("mode", "enabled", "filewriter")
+        """ determine number of images per file """
+        self.detector.set_nimages_per_file(self.nimages * self.ntriggers)
+        if self.storage_mode == 'per_run':
+            self.detector.set_nimages_per_file(self.nimages)
+        elif self.storage_mode == 'per_frame':
+            self.detector.set_nimages_per_file(1)
         self.detector.arm()
         self.update_state()
         self.updateId()
@@ -674,8 +681,12 @@ class EigerGUI(QtWidgets.QMainWindow):
             self.ntriggers_widget.setEnabled(0)
             self.btn_record.setEnabled(1)
     @QtCore.pyqtSlot()
-    def new_nimages_per_file(selfself, value):
-        print(f"Debug: dynamic setting of nimages per file note yet implemented {value}")
+    def new_nimages_per_file(self, value):
+        if value != 'per_dataset' and value != 'per_run' and value != 'per_frame':
+            print(f" programming Error: value {value} for storage mode unknown")
+            raise Exception(f"Unknown storage mode for H5 file: {value}")
+        self.storage_mode = value
+        print(f"Debug: Setting nimages per file to {value}")
 
     @QtCore.pyqtSlot("double")
     def new_twotheta(self, value):

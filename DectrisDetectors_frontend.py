@@ -129,6 +129,13 @@ class DetectorFrontend:
         "sets number of images to be recorded"
         self.detector.set_config("nimages", value, "detector")
 
+    def set_nimages_per_file(self, value):
+        "sets the number of images per h5 data file"
+        if value >  2147483647:
+            value = 2147483647
+            print(f'Warning: value greater than 2^31-1 = 2,147,483,647, reset to 2,147,483,647')
+        self.detector.set_config("nimages_per_file", value=value, iface="filewriter")
+
     """
     Shortcut for writer. Assumes that filepattern is set
     """
