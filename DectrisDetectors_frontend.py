@@ -16,7 +16,7 @@ from DectrisDetectors_backend import DetectorBackend
 class DetectorFrontend:
     "command line front end for convenient commands for Dectris Detectors"
 
-    def __init__(self, ip, vers="1.7.0", port=80):
+    def __init__(self, ip, vers="1.8.0", port=80):
         self.detector = DetectorBackend(ip, vers, port)
         self.armID = -1
 
