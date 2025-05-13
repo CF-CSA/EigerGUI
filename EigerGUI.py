@@ -536,7 +536,7 @@ class EigerGUI(QtWidgets.QMainWindow):
     @QtCore.pyqtSlot()
     def quitgui(self):
         "Stop the detector, then quit GUI"
-        self.detector.stop()
+        # self.detector.stop()
         QtCore.QCoreApplication.instance().quit()
 
     """
