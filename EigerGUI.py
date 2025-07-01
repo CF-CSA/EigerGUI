@@ -28,7 +28,7 @@ Bruker D8 (APEX3)
 
 
 class EigerGUI(QtWidgets.QMainWindow):
-    def __init__(self, ip="131.130.27.207"):
+    def __init__(self, ip="131.130.170.233"):
         super(EigerGUI, self).__init__()
 
         # list of parameters used for workflow
