@@ -33,16 +33,13 @@ class EigerGUI(QtWidgets.QMainWindow):
 
         # list of parameters used for workflow
         # self.outdir = os.path.join('D:', os.sep, 'frames', 'D8', 'screening')
-        self.datadir = os.path.join(
-            os.sep, "home", "tg", "univie", "instruments", "D8", "EIGER2", "data"
-        )
-        self.workdir = os.path.join(
-            os.sep, "home", "tg", "univie", "instruments", "D8", "EIGER2"
-        )
+        self.datadir = os.path.join(os.sep, "data", "epoc", "storage", "d8sxrd")
+        self.workdir = os.path.join(os.sep, "data", "epoc", "storage", "d8sxrd")
         self.timer = QTimer()
-        self.xdstemplate = "/xtal/Integration/XDS/CCSA-templates/XDS-D8-Eiger2R500.INP"
-        self.xdstemplate = "D:/frames/guest/XDS-D8-Eiger2R500.INP"
-        self.xdsoffsets = "D:/frames/guest/XDS-D8-Eiger2R500_OFFSETS.INP"
+        self.xdstemplate = "/xtal/Instruments/d8sxrd/config/XDS-D8-Eiger2R500.INP"
+        self.xdsoffsets = (
+            "/xtal/Instruments/d8sxrd/config/XDS-D8-Eiger2R500_OFFSETS.INP"
+        )
         self.expfile = ""
         self.sampleID = "YourSampleID_no_Spaces"
         self.xID = 0
@@ -62,7 +59,7 @@ class EigerGUI(QtWidgets.QMainWindow):
         self.ntriggers = 1
         # self.nshutter_buffer = 1
         self.nshutter_buffer = 2
-        self.storage_mode = "per_dataset" # 'per_dataset','per_run', 'per_frame'
+        self.storage_mode = "per_dataset"  # 'per_dataset','per_run', 'per_frame'
 
         self.nruns_widget = QtWidgets.QSpinBox(
             self, value=self.nruns, minimum=1, maximum=1000
@@ -77,7 +74,7 @@ class EigerGUI(QtWidgets.QMainWindow):
         self.scan_range = 5.0
         self.image_width = 0.5
         self.frame_time = self.apex_frame_time * self.image_width / self.scan_range
-        print (f"frame_time: {self.frame_time}")
+        print(f"frame_time: {self.frame_time}")
 
         # buttons that need to be disabled or enabled
         self.btn_arm = QtWidgets.QPushButton("Arm", self)
@@ -90,7 +87,7 @@ class EigerGUI(QtWidgets.QMainWindow):
         self.detector = DetectorFrontend(ip)
         self.detector.setup(frame_time=self.apex_frame_time, datadir=self.datadir)
 
-        self.update_intervall = 1000 # millisecond
+        self.update_intervall = 1000  # millisecond
         self.timer.timeout.connect(self.update_state)
         self.timer.start(self.update_intervall)
 
@@ -138,7 +135,11 @@ class EigerGUI(QtWidgets.QMainWindow):
         vlayout.addLayout(layout)
 
         layout = QtWidgets.QHBoxLayout()
-        layout.addWidget(QtWidgets.QLabel(text=f"Update intervall for detector state: {0.001*self.update_intervall:.1f}s"))
+        layout.addWidget(
+            QtWidgets.QLabel(
+                text=f"Update intervall for detector state: {0.001*self.update_intervall:.1f}s"
+            )
+        )
         vlayout.addLayout(layout)
 
         layout = QtWidgets.QHBoxLayout()
@@ -243,23 +244,28 @@ class EigerGUI(QtWidgets.QMainWindow):
             sweep = run["end"] - run["start"]
             self.new_scan_range(np.abs(sweep) * 180.0 / np.pi)
             # in case nruns is subdivided into ntriggers, less images between triggers
-            self.nimages = 180. / np.pi * np.abs(sweep) / self.image_width
+            self.nimages = 180.0 / np.pi * np.abs(sweep) / self.image_width
             self.nimages = round(self.nimages * self.nruns / self.ntriggers)
             # round and add one image as buffer, because Photon-100 is too slow for EIGER
             self.nimages = round(self.nimages) + self.nshutter_buffer
             if "frametime" in run and "frameangle" in run:
                 # 1st: time per degree
-                self.frame_time = np.pi / 180. * run["frametime"] / run["frameangle"]
+                self.frame_time = np.pi / 180.0 * run["frametime"] / run["frameangle"]
                 # 2nd: time per EIGER frame
                 self.frame_time = self.frame_time * self.image_width
                 self.napeximages = round(sweep / run["frameangle"])
-                print(f'Calculated frametime as {self.frame_time} with per frame and {self.image_width} deg/frame')
+                print(
+                    f"Calculated frametime as {self.frame_time} with per frame and {self.image_width} deg/frame"
+                )
                 self.lbl_frame_time.setText(f"{self.frame_time:.2f}")
             else:
                 print("Cannot determine frame time from EXP file. Use Screening time")
-                print("This will most likely lead to a mismatch between XDS.INP and data range")
-            print(f"Updating Scan range to {np.abs(sweep)*180. / np.pi:.2} and nimages to {self.nimages}")
-
+                print(
+                    "This will most likely lead to a mismatch between XDS.INP and data range"
+                )
+            print(
+                f"Updating Scan range to {np.abs(sweep)*180. / np.pi:.2} and nimages to {self.nimages}"
+            )
 
     """
     Steps for setting up XDS
@@ -293,7 +299,9 @@ class EigerGUI(QtWidgets.QMainWindow):
         for idx, run in enumerate(self.experiment.runs):
             rundir = self.workdir + os.path.sep + f"run{idx+1:02d}"
             # data_range = f"{1+idx*self.napeximages*self.nimages} {(idx+1) * self.napeximages * self.nimages}"
-            data_range = f"{1+idx*self.nimages} {(idx+1) * self.nimages - self.nshutter_buffer}"
+            data_range = (
+                f"{1+idx*self.nimages} {(idx+1) * self.nimages - self.nshutter_buffer}"
+            )
             xds = XDSparams(name_template, data_range)
             rt_Dectris = self.apex_frame_time * self.nimages
             sweep = run["end"] - run["start"]
@@ -308,7 +316,7 @@ class EigerGUI(QtWidgets.QMainWindow):
                 run["distance"],
                 dir,
                 run["start"],
-                self.xdsoffsets
+                self.xdsoffsets,
             )
             xds.update(self.xdstemplate)
 
@@ -324,6 +332,7 @@ class EigerGUI(QtWidgets.QMainWindow):
     """ 
     Settings for screening
     """
+
     def ui_ScreenSample(self):
         my = QtWidgets.QGroupBox("Screen Sample")
         self.lbl_frame_time = QtWidgets.QLabel(text=f"{self.frame_time:.2f}")
@@ -379,7 +388,7 @@ class EigerGUI(QtWidgets.QMainWindow):
 
         qb = QtWidgets.QPushButton("Arm (Screen)")
         qb.clicked.connect(self.arm_screen)
-        layout.addWidget(qb, 4,0)
+        layout.addWidget(qb, 4, 0)
 
         my.setLayout(layout)
         return my
@@ -439,7 +448,7 @@ class EigerGUI(QtWidgets.QMainWindow):
         rb.setChecked(True)
         lt.addWidget(rb)
 
-        layout.addLayout(lt, 4,1)
+        layout.addLayout(lt, 4, 1)
 
         pb = QtWidgets.QPushButton(text="Process EXP")
         pb.clicked.connect(self.process_exp)
@@ -469,6 +478,7 @@ class EigerGUI(QtWidgets.QMainWindow):
 
         my.setLayout(layout)
         return my
+
     @QtCore.pyqtSlot()
     def arm_screen(self):
         """Prepares the recording of data"""
@@ -495,7 +505,9 @@ class EigerGUI(QtWidgets.QMainWindow):
         if s == "ready":
             self.detector.stop()
         self.updatefilename()
-        print(f"Setting up data collection with {self.ntriggers} triggers, {self.frame_time}s frame time, and {self.nimages} images per trigger")
+        print(
+            f"Setting up data collection with {self.ntriggers} triggers, {self.frame_time}s frame time, and {self.nimages} images per trigger"
+        )
         self.detector.triggermode(self.triggermode, self.ntriggers)
         self.detector.set_frame_time(self.frame_time)
         self.detector.set_name_pattern(self.name_pattern)
@@ -503,9 +515,9 @@ class EigerGUI(QtWidgets.QMainWindow):
         self.detector.detector.set_config("mode", "enabled", "filewriter")
         """ determine number of images per file """
         self.detector.set_nimages_per_file(self.nimages * self.ntriggers)
-        if self.storage_mode == 'per_run':
+        if self.storage_mode == "per_run":
             self.detector.set_nimages_per_file(self.nimages)
-        elif self.storage_mode == 'per_frame':
+        elif self.storage_mode == "per_frame":
             self.detector.set_nimages_per_file(1)
         self.detector.arm()
         self.update_state()
@@ -618,6 +630,7 @@ class EigerGUI(QtWidgets.QMainWindow):
             self.le_xdsoffsets.setText(self.xdsoffsets)
 
     QtCore.pyqtSlot(str)
+
     def new_axis(self, value):
         self.Axis = value
 
@@ -680,9 +693,10 @@ class EigerGUI(QtWidgets.QMainWindow):
         else:
             self.ntriggers_widget.setEnabled(0)
             self.btn_record.setEnabled(1)
+
     @QtCore.pyqtSlot()
     def new_nimages_per_file(self, value):
-        if value != 'per_dataset' and value != 'per_run' and value != 'per_frame':
+        if value != "per_dataset" and value != "per_run" and value != "per_frame":
             print(f" programming Error: value {value} for storage mode unknown")
             raise Exception(f"Unknown storage mode for H5 file: {value}")
         self.storage_mode = value
