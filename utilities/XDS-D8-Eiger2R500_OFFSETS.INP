@@ -1,0 +1,13 @@
+! site specific OFFSETS for EIGERGUI
+! values from keywords read here
+! are added to values read from template
+! created by Tim Gruene, 11/9/2023
+! updated 12/11/2024 from sucrose data after remounting EIGER detector
+ ! incident beam and ORGX/ORGY
+ ! calculated 29-08-2023 from direct beam data
+ ! at various distances between 34mm and 240mm
+ ! from data Cu?directbeam_034mm_2023-03-08_141109 etc
+ ! INCIDENT_BEAM_DIRECTION= 0.001774 0.003063 0.999994
+ ! ORGX=    504.2  ORGY=     24.8
+ DETECTOR_DISTANCE= -1.10
+

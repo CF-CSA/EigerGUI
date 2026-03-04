@@ -1,0 +1,60 @@
+!---------------------------------------------------------------!
+! sfrmtools:    Read an sfrm-file,                              !
+!               extract experimental parameters and             !
+!               print the corresponding XDS parameters.         !
+! Copyright:    Tim Gruene, 2014                                !
+!---------------------------------------------------------------!
+
+! Data extracted from file 
+! 2theta = 60deg, assuming vertical swing axis
+! Rotation about omega axis
+
+ DETECTOR= EIGER2R500 OVERLOAD=1048576 MINIMUM_VALID_PIXEL_VALUE= 0
+ SENSOR_THICKNESS= 0.450 ! mm Silicon
+ ! SILICON= 1 ! let XDS determine this
+ GAIN= 1.0
+ ! since the system update 2024/01/26, the images have the physical
+ ! number of pixels. Unsure how Dectris did this.
+ NX=  1028  NY=   512 QX= 0.075 QY= 0.075
+ TRUSTED_REGION= 0 1.5
+ VALUE_RANGE_FOR_TRUSTED_DETECTOR_PIXELS= 3000 30000 
+
+ ! incident beam and ORGX/ORGY
+ ! calculated 13-02-2026 from Tartrate data
+ ! /data/epoc/storage/d8sxrd//UniVie/CCSA/2026/Tartrate/xtal-01/CuKa/data
+ ! at various distances between 34mm and 240mm
+ ! from data Cu?directbeam_034mm_2023-03-08_141109 etc
+ ! INCIDENT_BEAM_DIRECTION= 0.00352584 0.00280455 0.999989798
+ ! following incident beam direction as output from KTartrate 
+ ! (2023-11-23_CuKa)
+ ! measurement, which also served as source for ORGX/ORGY
+  INCIDENT_BEAM_DIRECTION= -0.0003425 0.002975 0.999995
+  ORGX=    504  ORGY=     494.3
+ ! Template should contain the APEX distance, which can be corrected
+ ! from the OFFSETS file
+ DETECTOR_DISTANCE=    34.00
+
+! JOB= XYCORR INIT COLSPOT IDXREF DEFPIX INTEGRATE CORRECT
+ JOB= XYCORR INIT COLSPOT IDXREF DEFPIX INTEGRATE CORRECT
+ SNRC= 50
+ 
+!! refinement of parameters, idxref, correct: default; integrate: none
+ REFINE(IDXREF)= BEAM ORIENTATION CELL AXIS
+ REFINE(INTEGRATE)= 
+! REFINE(CORRECT)= POSITION BEAM AXIS ORIENTATION CELL
+
+ DELPHI= 90
+ BEAM_DIVERGENCE=   1.44  BEAM_DIVERGENCE_E.S.D.=  0.144
+ REFLECTING_RANGE=  0.5  REFLECTING_RANGE_E.S.D.=  0.1
+
+ FRACTION_OF_POLARIZATION=0.50
+ DIRECTION_OF_DETECTOR_X-AXIS=  0.500000 0.0  0.866025
+ DIRECTION_OF_DETECTOR_Y-AXIS= 0.0 1.0 0.0
+ X-RAY_WAVELENGTH= 1.541840   !Angstroem
+ OSCILLATION_RANGE= 0.5
+ ROTATION_AXIS= 0 -1 0
+ NAME_TEMPLATE_OF_DATA_FRAMES= ../../data/KTartrate_ID-1_2023-06-12_103536_??????.h5
+ LIB= /xtal/Integration/neggia/build/src/dectris/neggia/plugin/dectris-neggia.so
+ DATA_RANGE= 1081 1260
+
+ DATA_RANGE_FIXED_SCALE_FACTOR= 1 9999 1.0 
